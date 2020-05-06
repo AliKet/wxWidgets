@@ -378,15 +378,10 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     // see below why.
     sim.MouseMove(pt);
 #endif
-    wxYield();
-
     sim.MouseDown();
-    wxYield();
-
     sim.MouseMove(pt.x + 50, pt.y);
-    wxYield();
-
     sim.MouseUp();
+
     wxYield();
 
     CHECK(colsize.GetCount() == 1);
@@ -1167,19 +1162,12 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
 
     wxUIActionSimulator sim;
 
-    wxYield();
     sim.MouseMove(point);
 #ifdef __WXGTK20__
     sim.MouseMove(point);
 #endif
-
-    wxYield();
     sim.MouseDown();
-
-    wxYield();
     sim.MouseMove(point + wxPoint(draglength, 0));
-
-    wxYield();
     sim.MouseUp();
 
     wxYield();
@@ -1224,17 +1212,14 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     wxUIActionSimulator sim;
 
     // Drag to reach the minimal width.
-    wxYield();
     sim.MouseMove(point);
 #ifdef __WXGTK20__
     sim.MouseMove(point);
 #endif
-    wxYield();
     sim.MouseDown();
-    wxYield();
     sim.MouseMove(point - wxPoint(startwidth - startminwidth, 0));
-    wxYield();
     sim.MouseUp();
+
     wxYield();
 
     CHECK(m_grid->GetColSize(0) == newminwidth);
