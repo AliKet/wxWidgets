@@ -382,7 +382,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     sim.MouseMove(pt.x + 50, pt.y);
     sim.MouseUp();
 
-    wxYield();
+    for ( wxStopWatch sw; sw.Time() < 50; )
+        wxYield();
 
     CHECK(colsize.GetCount() == 1);
 
@@ -402,7 +403,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     sim.MouseUp();
 #endif
 
-    wxYield();
+    for ( wxStopWatch sw; sw.Time() < 50; )
+        wxYield();
 
     CHECK(rowsize.GetCount() == 1);
 #endif
@@ -433,7 +435,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     wxYield();
 
     sim.MouseUp();
-    wxYield();
+
+    for ( wxStopWatch sw; sw.Time() < 50; )
+        wxYield();
 
     CHECK(select.GetCount() == 1);
 #endif
@@ -1170,7 +1174,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     sim.MouseMove(point + wxPoint(draglength, 0));
     sim.MouseUp();
 
-    wxYield();
+    for ( wxStopWatch sw; sw.Time() < 50; )
+        wxYield();
 
     CHECK(m_grid->GetColSize(0) == startwidth + draglength);
 #endif
@@ -1220,7 +1225,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     sim.MouseMove(point - wxPoint(startwidth - startminwidth, 0));
     sim.MouseUp();
 
-    wxYield();
+    for ( wxStopWatch sw; sw.Time() < 50; )
+        wxYield();
 
     CHECK(m_grid->GetColSize(0) == newminwidth);
 #endif
