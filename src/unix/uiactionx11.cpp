@@ -34,9 +34,16 @@
 GtkWidget* wxGetTopLevelGTK();
 GdkWindow* wxGetTopLevelGDK();
 
-static inline Window wxGetTopLevelXWindow()
+static inline void wxSetInputFocusToXWindow(wxX11Display& display)
 {
-    return GDK_WINDOW_XID(wxGetTopLevelGDK());
+    XSetInputFocus(display, GDK_WINDOW_XID(wxGetTopLevelGDK()),
+                   RevertToPointerRoot, CurrentTime);
+}
+#else
+static inline void wxSetInputFocusToXWindow(wxX11Display& display)
+{
+    // TODO: implement this for (wxX11 & wxMotif).
+    wxUnusedVar(display);
 }
 #endif // __WXGTK__
 
@@ -234,7 +241,7 @@ public:
         wxYield();
         wxMilliSleep(50);
 
-        XSetInputFocus(m_display, wxGetTopLevelXWindow(), RevertToPointerRoot, CurrentTime);
+        wxSetInputFocusToXWindow(m_display);
     }
 
 private:
@@ -352,7 +359,7 @@ public:
         wxYield();
         wxMilliSleep(50);
 
-        XSetInputFocus(m_display, wxGetTopLevelXWindow(), RevertToPointerRoot, CurrentTime);
+        wxSetInputFocusToXWindow(m_display);
     }
 
 private:
