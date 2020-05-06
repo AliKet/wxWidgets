@@ -27,12 +27,18 @@
 
 #include "wx/unix/utilsx11.h"
 
-#ifdef __WXGTK3__
-#include "wx/utils.h"
-
+#ifdef __WXGTK__
 #include "wx/gtk/private/wrapgtk.h"
+#include <gdk/gdkx.h>
+
 GtkWidget* wxGetTopLevelGTK();
-#endif
+GdkWindow* wxGetTopLevelGDK();
+
+static inline Window wxGetTopLevelXWindow()
+{
+    return GDK_WINDOW_XID(wxGetTopLevelGDK());
+}
+#endif // __WXGTK__
 
 // Normally we fall back on "plain X" implementation if XTest is not available,
 // but it's useless to do it when using GTK+ 3 as it's not going to work with
@@ -227,6 +233,8 @@ public:
     {
         wxYield();
         wxMilliSleep(50);
+
+        XSetInputFocus(m_display, wxGetTopLevelXWindow(), RevertToPointerRoot, CurrentTime);
     }
 
 private:
@@ -343,6 +351,8 @@ public:
     {
         wxYield();
         wxMilliSleep(50);
+
+        XSetInputFocus(m_display, wxGetTopLevelXWindow(), RevertToPointerRoot, CurrentTime);
     }
 
 private:
