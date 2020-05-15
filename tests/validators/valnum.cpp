@@ -226,6 +226,10 @@ void NumValidatorTestCase::Interactive()
     valFloat.SetRange(-10., 10.);
     text2->SetValidator(valFloat);
 
+    wxFrame* frame = dynamic_cast<wxFrame*>(wxTheApp->GetTopWindow());
+    frame->SetFocus();
+    frame->Raise();
+
     wxUIActionSimulator sim;
 
     // Entering '-' in a control with positive range is not allowed.
