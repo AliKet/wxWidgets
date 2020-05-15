@@ -176,7 +176,9 @@ protected:
 
         wxLogTrace("focus", "SetInputFocusToXWindow on Window 0x%ul.", focus);
 
+        XRaiseWindow(m_display, focus);
         XSetInputFocus(m_display, focus, RevertToPointerRoot, CurrentTime);
+        XSync(m_display, False);
     }
 
     wxX11Display m_display;

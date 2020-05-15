@@ -212,9 +212,6 @@ void NumValidatorTestCase::Interactive()
         return;
 #endif // __WXMSW__
 
-    for ( wxStopWatch sw; sw.Time() < 200; )
-        wxYield();
-
     // Set a locale using comma as thousands separator character.
     wxLocale loc(wxLANGUAGE_ENGLISH_UK, wxLOCALE_DONT_LOAD_DEFAULT);
 
