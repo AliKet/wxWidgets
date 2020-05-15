@@ -200,6 +200,7 @@ void NumValidatorTestCase::NoTrailingZeroes()
 }
 
 #if wxUSE_UIACTIONSIMULATOR
+#include "wx/stopwatch.h"
 
 void NumValidatorTestCase::Interactive()
 {
@@ -210,6 +211,9 @@ void NumValidatorTestCase::Interactive()
     if ( IsAutomaticTest() )
         return;
 #endif // __WXMSW__
+
+    for ( wxStopWatch sw; sw.Time() < 200; )
+        wxYield();
 
     // Set a locale using comma as thousands separator character.
     wxLocale loc(wxLANGUAGE_ENGLISH_UK, wxLOCALE_DONT_LOAD_DEFAULT);
@@ -225,14 +229,10 @@ void NumValidatorTestCase::Interactive()
     valFloat.SetRange(-10., 10.);
     text2->SetValidator(valFloat);
 
-    m_text->SetFocus();
-
     wxUIActionSimulator sim;
 
-    wxFrame* frame = dynamic_cast<wxFrame*>(wxTheApp->GetTopWindow());
-    CPPUNIT_ASSERT(frame->IsActive());
-
     // Entering '-' in a control with positive range is not allowed.
+    m_text->SetFocus();
     sim.Char('-');
     wxYield();
     CPPUNIT_ASSERT_EQUAL( "", m_text->GetValue() );
