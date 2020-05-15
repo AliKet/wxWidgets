@@ -225,10 +225,11 @@ void NumValidatorTestCase::Interactive()
     valFloat.SetRange(-10., 10.);
     text2->SetValidator(valFloat);
 
+    m_text->SetFocus();
+
     wxUIActionSimulator sim;
 
     // Entering '-' in a control with positive range is not allowed.
-    m_text->SetFocus();
     sim.Char('-');
     wxYield();
     CPPUNIT_ASSERT_EQUAL( "", m_text->GetValue() );
