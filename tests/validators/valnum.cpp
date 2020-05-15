@@ -229,6 +229,8 @@ void NumValidatorTestCase::Interactive()
 
     wxUIActionSimulator sim;
 
+    CPPUNIT_ASSERT(m_text->GetParent()->IsActive());
+
     // Entering '-' in a control with positive range is not allowed.
     sim.Char('-');
     wxYield();
