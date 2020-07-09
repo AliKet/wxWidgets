@@ -29,6 +29,14 @@
 
 #include <stdarg.h>
 
+#if wxUSE_ANIMATIONCTRL
+// Temp: compilation fix
+wxAnimation* wxXmlResourceHandlerImpl::GetAnimation(const wxString& )
+{
+    return NULL;
+}
+#endif
+
 // ----------------------------------------------------------------------------
 // helpers to create/save some xrc
 // ----------------------------------------------------------------------------
