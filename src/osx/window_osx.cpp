@@ -1339,13 +1339,13 @@ void wxWindowMac::DoGetTextExtent(const wxString& str,
     delete ctx;
 
     if ( externalLeading )
-        *externalLeading = (wxCoord)(e+0.5);
+        *externalLeading = (wxCoord)wxRound(e);
     if ( descent )
-        *descent = (wxCoord)(d+0.5);
+        *descent = (wxCoord)wxRound(d);
     if ( x )
-        *x = (wxCoord)(w+0.5);
+        *x = (wxCoord)wxRound(w);
     if ( y )
-        *y = (wxCoord)(h+0.5);
+        *y = (wxCoord)wxRound(h);
 }
 
 /*
@@ -2416,29 +2416,6 @@ bool wxWindowMac::CanSetTransparent()
 wxByte wxWindowMac::GetTransparent() const
 {
     return m_macAlpha ;
-}
-
-bool wxWindowMac::IsShownOnScreen() const
-{
-    if ( GetPeer() && GetPeer()->IsOk() )
-    {
-        bool peerVis = GetPeer()->IsVisible();
-        bool wxVis = wxWindowBase::IsShownOnScreen();
-        if( peerVis != wxVis )
-        {
-            // CS : put a breakpoint here to investigate differences
-            // between native an wx visibilities
-            // the only place where I've encountered them until now
-            // are the hiding/showing sequences where the vis-changed event is
-            // first sent to the innermost control, while wx does things
-            // from the outmost control
-            wxVis = wxWindowBase::IsShownOnScreen();
-            return wxVis;
-        }
-
-        return GetPeer()->IsVisible();
-    }
-    return wxWindowBase::IsShownOnScreen();
 }
 
 #if wxUSE_HOTKEY && wxOSX_USE_COCOA_OR_CARBON

@@ -29,7 +29,7 @@
 #include "wx/window.h" // for wxGetActiveWindow
 #include "wx/unix/utilsx11.h"
 
-#ifdef __WXGTK__
+#ifdef __WXGTK20__
 #include "wx/gtk/private/wrapgtk.h"
 #include <gdk/gdkx.h>
 
@@ -153,7 +153,7 @@ protected:
 
         wxWindow* win = wxGetActiveWindow();
 
-    #if defined(__WXGTK__)
+    #if defined(__WXGTK20__)
         if ( win && !win->IsTopLevel() )
         {
             win = wxGetTopLevelParent(win);
@@ -172,7 +172,11 @@ protected:
             return;
 
         focus = (Window)(win->GetHandle());
-    #endif // __WXGTK__
+    #else
+        // We probably need to do something similar here for the other ports,
+        // but for now just avoid the warning about an unused variable.
+        wxUnusedVar(win);
+    #endif // platform
 
         wxLogTrace("focus", "SetInputFocusToXWindow on Window 0x%ul.", focus);
 
