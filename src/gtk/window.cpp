@@ -4583,6 +4583,9 @@ void wxWindowGTK::SetFocus()
     if (gs_currentFocus != this)
         gs_pendingFocus = this;
 
+    if ( !gtk_widget_get_realized(m_widget) )
+        return;
+
     wxWindow* tlw = wxGetTopLevelParent(static_cast<wxWindow*>(this));
     if (tlw && tlw->m_widget && !gtk_window_is_active(GTK_WINDOW(tlw->m_widget)))
         tlw->Raise();
