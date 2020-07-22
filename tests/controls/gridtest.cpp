@@ -390,12 +390,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     if ( !EnableUITests() )
         return;
 
-#ifdef __WXGTK20__
-    // Works locally, but not when run on Travis CI.
-    if ( IsAutomaticTest() )
-        return;
-#endif
-
     EventCounter colsize(m_grid, wxEVT_GRID_COL_SIZE);
     EventCounter rowsize(m_grid, wxEVT_GRID_ROW_SIZE);
 
@@ -1206,12 +1200,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     if ( !EnableUITests() )
         return;
 
-#ifdef __WXGTK20__
-    // Works locally, but not when run on Travis CI.
-    if ( IsAutomaticTest() )
-        return;
-#endif
-
     SECTION("Default") {}
     SECTION("Native header") { m_grid->UseNativeColHeader(); }
 
@@ -1256,12 +1244,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
 #if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__))
     if ( !EnableUITests() )
         return;
-
-#ifdef __WXGTK20__
-    // Works locally, but not when run on Travis CI.
-    if ( IsAutomaticTest() )
-        return;
-#endif
 
     SECTION("Default") {}
     SECTION("Native header")
