@@ -111,6 +111,10 @@ protected:
 
     TestableGrid *m_grid;
 
+#if wxUSE_UIACTIONSIMULATOR
+    long m_oldDelay; // To restore the old delay used by wxUIActionSimulator.
+#endif // wxUSE_UIACTIONSIMULATOR
+
     wxDECLARE_NO_COPY_CLASS(GridTestCase);
 };
 
@@ -129,6 +133,11 @@ GridTestCase::GridTestCase()
     {
         WARN("Grid not repainted until timeout expiration");
     }
+
+#if wxUSE_UIACTIONSIMULATOR
+    if ( IsRunningUnderXVFB() )
+        wxUIActionSimulator::SetDelay(5, &m_oldDelay);
+#endif // wxUSE_UIACTIONSIMULATOR
 }
 
 GridTestCase::~GridTestCase()
@@ -146,6 +155,11 @@ GridTestCase::~GridTestCase()
         win->ReleaseMouse();
 
     wxDELETE(m_grid);
+
+#if wxUSE_UIACTIONSIMULATOR
+    if ( IsRunningUnderXVFB() )
+        wxUIActionSimulator::SetDelay(m_oldDelay);
+#endif // wxUSE_UIACTIONSIMULATOR
 }
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")

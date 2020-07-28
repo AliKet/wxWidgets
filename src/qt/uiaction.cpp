@@ -163,4 +163,8 @@ wxUIActionSimulator::~wxUIActionSimulator()
     // stateless, so no need to delete it.
 }
 
+void wxUIActionSimulator::SetDelay(long WXUNUSED(msecs), long* WXUNUSED(oldDelay))
+{
+}
+
 #endif // wxUSE_UIACTIONSIMULATOR

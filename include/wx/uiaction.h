@@ -24,6 +24,9 @@ public:
     wxUIActionSimulator();
     ~wxUIActionSimulator();
 
+    // Sets the delay (in ms) between key/button presses.
+    // Returns the old value in oldDelay if not NULL.
+    static void SetDelay(long msecs, long* oldDelay = NULL);
 
     // Mouse simulation
     // ----------------

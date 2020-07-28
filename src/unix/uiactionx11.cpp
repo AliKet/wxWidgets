@@ -68,35 +68,11 @@ public:
         wxASSERT_MSG( ms_numDepressed >= 0, "Invalid call to wxXSync() ctor" );
     }
 
-    ~wxXSync()
-    {
-        XSync(m_display, False);
-
-        if ( m_isMotion )
-        {
-            wxYield();
-        }
-        else // it's button or key event
-        {
-            if ( ms_numDepressed > 0 )
-            {
-                // Do nothing if a key / button is still depressed.
-                return;
-            }
-
-            wxYield();
-            wxMilliSleep(Default_Delay);
-        }
-    }
+    ~wxXSync();
 
 private:
     wxX11Display& m_display;
     const bool    m_isMotion; // false if it's button or key event.
-
-    enum
-    {
-        Default_Delay = 20  // amount of ms to sleep after key/button release.
-    };
 
     static int ms_numDepressed;
 
@@ -116,11 +92,29 @@ public:
     // The returned pointer is owned by the caller.
     static wxUIActionSimulatorImpl* New();
 
+    static void SetDelay(long msecs, long* oldDelay)
+    {
+        if ( oldDelay )
+            *oldDelay = ms_delay;
+
+        ms_delay = wxClip(msecs, (long)Min_Delay, (long)Max_Delay);
+    }
+
+    static unsigned long GetDelay() { return ms_delay; }
+
     virtual bool MouseMove(long x, long y) wxOVERRIDE;
     virtual bool MouseDown(int button = wxMOUSE_BTN_LEFT) wxOVERRIDE;
     virtual bool MouseUp(int button = wxMOUSE_BTN_LEFT) wxOVERRIDE;
 
     virtual bool DoKey(int keycode, int modifiers, bool isDown) wxOVERRIDE;
+
+    enum
+    {
+        Min_Delay      = 0,   // Minimum acceptable delay in ms.
+        Max_Delay      = 250, // Maximum acceptable delay in ms.
+        Default_Delay  = 10,  // amount of ms to sleep after key/button release.
+        PreStart_Delay = 20,  // amount of ms to sleep before simulation begins.
+    };
 
 protected:
     // This ctor takes ownership of the display.
@@ -128,7 +122,7 @@ protected:
         : m_display(display)
     {
         wxYield();
-        wxMilliSleep(50);
+        wxMilliSleep(PreStart_Delay);
 
     #ifndef __WXGTK3__
         SetInputFocusToXWindow();
@@ -178,6 +172,8 @@ protected:
 
     wxX11Display m_display;
 
+    static long ms_delay;
+
 private:
     // Common implementation of Mouse{Down,Up}() which just forwards to
     // DoX11Button() after translating wx button to X button constant.
@@ -189,6 +185,10 @@ private:
 
     wxDECLARE_NO_COPY_CLASS(wxUIActionSimulatorX11Impl);
 };
+
+/*static*/
+long wxUIActionSimulatorX11Impl::ms_delay =
+        wxUIActionSimulatorX11Impl::Default_Delay;
 
 bool wxUIActionSimulatorX11Impl::SendButtonEvent(int button, bool isDown)
 {
@@ -468,6 +468,32 @@ wxUIActionSimulator::wxUIActionSimulator()
 wxUIActionSimulator::~wxUIActionSimulator()
 {
     delete m_impl;
+}
+
+void wxUIActionSimulator::SetDelay(long msecs, long* oldDelay)
+{
+    wxUIActionSimulatorX11Impl::SetDelay(msecs, oldDelay);
+}
+
+wxXSync::~wxXSync()
+{
+    XSync(m_display, False);
+
+    if ( m_isMotion )
+    {
+        wxYield();
+    }
+    else // it's button or key event
+    {
+        if ( ms_numDepressed > 0 )
+        {
+            // Do nothing if a key / button is still depressed.
+            return;
+        }
+
+        wxYield();
+        wxMilliSleep(wxUIActionSimulatorX11Impl::GetDelay());
+    }
 }
 
 #endif // wxUSE_UIACTIONSIMULATOR

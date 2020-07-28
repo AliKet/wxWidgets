@@ -14,6 +14,7 @@
 #endif
 
 #include "wx/app.h"
+#include "wx/uiaction.h"
 #include "testableframe.h"
 
 wxTestableFrame::wxTestableFrame() : wxFrame(NULL, wxID_ANY, wxASCII_STR("Test Frame"))
@@ -22,6 +23,11 @@ wxTestableFrame::wxTestableFrame() : wxFrame(NULL, wxID_ANY, wxASCII_STR("Test F
     Move(200, 200);
 
     Show();
+
+#if wxUSE_UIACTIONSIMULATOR
+    if ( IsRunningUnderXVFB() )
+        wxUIActionSimulator::SetDelay(0);
+#endif
 }
 
 void wxTestableFrame::OnEvent(wxEvent& evt)

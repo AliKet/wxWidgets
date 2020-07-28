@@ -175,6 +175,8 @@ MyFrame::MyFrame(const wxString& title)
                             wxDefaultPosition, wxDefaultSize,
                             wxTE_MULTILINE);
     sizer->Add(m_text, wxSizerFlags(1).Expand().Border());
+
+    wxUIActionSimulator::SetDelay(0);
 }
 
 
