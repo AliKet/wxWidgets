@@ -84,6 +84,7 @@ bool MyComboBoxValidator::Validate(wxWindow *WXUNUSED(parent))
     {
         // we accept any string != g_combobox_choices[1|2] !
 
+        // N.B. SendErrorEvent() could be used here instead of wxLogError()
         wxLogError("Invalid combo box text!");
         return false;
     }
@@ -153,6 +154,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_MENU(wxID_EXIT, MyFrame::OnQuit)
     EVT_MENU(VALIDATE_TEST_DIALOG, MyFrame::OnTestDialog)
     EVT_MENU(VALIDATE_TOGGLE_BELL, MyFrame::OnToggleBell)
+    EVT_MENU(VALIDATE_TOGGLE_INTERACTIVE, MyFrame::OnToggleInteractive)
 wxEND_EVENT_TABLE()
 
 MyFrame::MyFrame(wxFrame *frame, const wxString&title, int x, int y, int w, int h)
@@ -169,6 +171,7 @@ MyFrame::MyFrame(wxFrame *frame, const wxString&title, int x, int y, int w, int 
 
     file_menu->Append(VALIDATE_TEST_DIALOG, "&Test dialog...\tCtrl-T", "Demonstrate validators");
     file_menu->AppendCheckItem(VALIDATE_TOGGLE_BELL, "&Bell on error", "Toggle bell on error");
+    file_menu->AppendCheckItem(VALIDATE_TOGGLE_INTERACTIVE, "&Interactive", "Validate interactively");
     file_menu->AppendSeparator();
     file_menu->Append(wxID_EXIT, "E&xit");
 
@@ -232,6 +235,22 @@ void MyFrame::OnToggleBell(wxCommandEvent& event)
 {
     m_silent = !m_silent;
     wxValidator::SuppressBellOnError(m_silent);
+    event.Skip();
+}
+
+void MyFrame::OnToggleInteractive(wxCommandEvent& event)
+{
+    if ( wxValidator::IsInteractive() )
+    {
+        wxValidator::ValidateOnFocusLost();
+        wxLogMessage("Validate on focus lost.");
+    }
+    else
+    {
+        wxValidator::ValidateInteractively();
+        wxLogMessage("Validate interactively.");
+    }
+
     event.Skip();
 }
 
@@ -340,6 +359,9 @@ MyDialog::MyDialog( wxWindow *parent, const wxString& title,
 
     wxIntegerValidator<unsigned short> smallIntVal(&g_data.m_smallIntValue);
     smallIntVal.SetRange(1, 5);
+    // Comment out this line to make the validator reject invalid input immediately.
+    smallIntVal.SetStyle(wxNUM_VAL_LAZY_VALIDATION);
+
     numSizer->Add(new wxStaticText(this, wxID_ANY, "Int between 1 and 5:"),
                   center);
     numSizer->Add(new wxTextCtrl(this, wxID_ANY, "",
@@ -386,6 +408,11 @@ MyDialog::MyDialog( wxWindow *parent, const wxString& title,
 
     // Now sets the focus to m_text
     m_text->SetFocus();
+
+    // Bind event handlers
+    Bind(wxEVT_VALIDATE_OK, &MyDialog::OnValidate, this);
+    Bind(wxEVT_VALIDATE_ERROR, &MyDialog::OnValidate, this);
+    Bind(wxEVT_UPDATE_UI, &MyDialog::OnUpdateUI, this);
 }
 
 void MyDialog::OnChangeValidator(wxCommandEvent& WXUNUSED(event))
@@ -396,6 +423,54 @@ void MyDialog::OnChangeValidator(wxCommandEvent& WXUNUSED(event))
     {
         dialog.ApplyValidator();
     }
+}
+
+void MyDialog::OnValidate(wxValidationStatusEvent& event)
+{
+    wxWindow* const win = event.GetWindow();
+
+    bool validationFailed = false;
+
+    if ( event.GetEventType() == wxEVT_VALIDATE_OK )
+    {
+        // Restore the default properties.
+        win->SetBackgroundColour(wxNullColour);
+    }
+    else if ( event.GetEventType() == wxEVT_VALIDATE_ERROR )
+    {
+        validationFailed = true;
+
+        // Make the control reflect the invalid state.
+        // or a wxRichToolTip can be used here to show the error message.
+        win->SetBackgroundColour(wxColour("#f2bdcd")); // Orchid pink
+
+        if ( event.GetId() == VALIDATE_COMBO )
+        {
+            if ( event.CanPopup() )
+                wxLogError(event.GetErrorMessage());
+        }
+        else
+        {
+            // Show the default error message box
+            event.Skip();
+        }
+    }
+
+    if ( wxValidator::IsInteractive() || wxValidator::ShouldValidateOnFocusLost() )
+    {
+        if ( validationFailed )
+            m_invalidWins.insert(win);
+        else
+            m_invalidWins.erase(win);
+    }
+}
+
+void MyDialog::OnUpdateUI(wxUpdateUIEvent& event)
+{
+    if ( event.GetId() == wxID_OK )
+        event.Enable(m_invalidWins.empty());
+    else
+        event.Skip();
 }
 
 // ----------------------------------------------------------------------------

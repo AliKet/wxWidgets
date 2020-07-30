@@ -2127,7 +2127,7 @@ bool wxWindowBase::Validate()
 
         virtual bool OnDo(wxValidator* validator) wxOVERRIDE
         {
-            return validator->Validate(m_win);
+            return validator->DoValidate(m_win);
         }
 
         virtual bool OnRecurse(wxWindow* child) wxOVERRIDE
@@ -3006,12 +3006,33 @@ void wxWindowBase::OnSysColourChanged(wxSysColourChangedEvent& WXUNUSED(event))
 // the default action is to populate dialog with data when it's created,
 // and nudge the UI into displaying itself correctly in case
 // we've turned the wxUpdateUIEvents frequency down low.
-void wxWindowBase::OnInitDialog( wxInitDialogEvent &WXUNUSED(event) )
+void wxWindowBase::OnInitDialog( wxInitDialogEvent& event )
 {
     TransferDataToWindow();
 
     // Update the UI at this point
     UpdateWindowUI(wxUPDATE_UI_RECURSE);
+
+#if wxUSE_VALIDATORS
+    // Textentry validators must handle the wxInitDialogEvent event in order
+    // to allow the associated window to receive wxEVT_TEXT events which are
+    // blocked by default for children of a wxDialog.
+    wxWindowList& children = GetChildren();
+    for ( wxWindowList::iterator i = children.begin();
+          i != children.end();
+          ++i )
+    {
+        wxWindow* const child = static_cast<wxWindow*>(*i);
+
+        if ( child->IsTopLevel() )
+            return;
+
+        wxValidator* const validator = child->GetValidator();
+
+        if ( validator && validator->IsTextEntryValidator() )
+            wxQueueEvent(validator, event.Clone());
+    }
+#endif // wxUSE_VALIDATORS
 }
 
 // ----------------------------------------------------------------------------
@@ -3463,7 +3484,7 @@ bool wxWindowBase::TryBefore(wxEvent& event)
     if ( event.GetEventObject() == this )
     {
         wxValidator * const validator = GetValidator();
-        if ( validator && validator->ProcessEventLocally(event) )
+        if ( validator && validator->ProcessEvent(event) )
         {
             return true;
         }

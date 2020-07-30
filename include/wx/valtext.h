@@ -42,10 +42,61 @@ enum wxTextValidatorStyle
 };
 
 // ----------------------------------------------------------------------------
+// wxTextEntryValidator: common base class for wxTextValidator & wxNumValidator
+// ----------------------------------------------------------------------------
+class WXDLLIMPEXP_CORE wxTextEntryValidator : public wxValidator
+{
+public:
+    wxTextEntryValidator() : m_skipTextEvent(false) {}
+    wxTextEntryValidator(const wxTextEntryValidator& other)
+        : wxValidator(other)
+    {
+        m_skipTextEvent = other.m_skipTextEvent;
+    }
+
+    virtual ~wxTextEntryValidator() {}
+
+    // Override base class method to check whether the window does support
+    // this type of validators or not.
+    virtual void SetWindow(wxWindow *win) wxOVERRIDE;
+
+    // returns the error message if the contents of 'str' are invalid.
+    virtual wxString IsValid(const wxString& str) const = 0;
+
+    virtual bool IsTextEntryValidator() const wxOVERRIDE { return true; }
+
+protected:
+    // Get the text entry of the associated control. Normally shouldn't ever
+    // return NULL (and will assert if it does return it) but the caller should
+    // still test the return value for safety.
+    wxTextEntry *GetTextEntry() const;
+
+    // Events handlers
+    void OnText(wxCommandEvent& event);
+    void OnPasteText(wxClipboardTextEvent& event);
+    void OnValidate(wxValidationStatusEvent& event);
+    void OnKillFocus(wxFocusEvent& event);
+
+    void OnInitDialog(wxInitDialogEvent& event);
+
+private:
+    // Controls with validators BREAK this assumption:
+    //  - no wxEVT_TEXT event is generated during creation.
+    // because if they happen to be children of a wxDialog,
+    // the wxEVT_TEXT will be generated as a result of transferring
+    // data to their windows while initialising the dialog. which is
+    // not the case if they don't have any validator at all.
+    // to keep the previous assumption valid (at least for wxDialog)
+    // we don't let any wxEVT_TEXT skip unless the dialog, to which
+    // the associated window belongs, is fully initialized.
+    bool m_skipTextEvent;
+};
+
+// ----------------------------------------------------------------------------
 // wxTextValidator
 // ----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxTextValidator: public wxValidator
+class WXDLLIMPEXP_CORE wxTextValidator: public wxTextEntryValidator
 {
 public:
     wxTextValidator(long style = wxFILTER_NONE, wxString *val = NULL);
@@ -76,8 +127,6 @@ public:
     // ACCESSORS
     inline long GetStyle() const { return m_validatorStyle; }
     void SetStyle(long style);
-
-    wxTextEntry *GetTextEntry();
 
     // strings & chars inclusions:
     // ---------------------------
@@ -110,7 +159,7 @@ public:
     // --------------------
 
     // returns the error message if the contents of 'str' are invalid
-    virtual wxString IsValid(const wxString& str) const;
+    virtual wxString IsValid(const wxString& str) const wxOVERRIDE;
 
 protected:
 

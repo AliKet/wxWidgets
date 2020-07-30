@@ -20,11 +20,14 @@
 
 #ifndef WX_PRECOMP
     #include "wx/app.h"
+    #include "wx/dialog.h"
     #include "wx/textctrl.h"
 #endif // WX_PRECOMP
 
 #include "wx/scopedptr.h"
+#include "wx/timer.h"
 #include "wx/uiaction.h"
+#include "wx/valnum.h"
 
 #if wxUSE_CLIPBOARD
     #include "wx/clipbrd.h"
@@ -1414,22 +1417,94 @@ TEST_CASE("wxTextCtrl::LongPaste", "[wxTextCtrl][clipboard][paste]")
 
 #endif // wxUSE_CLIPBOARD
 
+class MyDialog : public wxDialog
+{
+public:
+    MyDialog(wxWindow *parent)
+        : wxDialog(parent, wxID_ANY, "Entry")
+    {
+        wxIntegerValidator<int> val(&m_value);
+        wxTextCtrl* text = new wxTextCtrl(this, wxID_ANY);
+        text->SetValidator(val);
+        text->Bind(wxEVT_TEXT, &MyDialog::OnText, this);
+        CreateButtonSizer(wxOK);
+    }
+
+    void OnText(wxCommandEvent& WXUNUSED(event))
+    {
+        ++m_value;
+    }
+
+    bool IsTextEventGenerated() const
+    {
+        return m_value > 0;
+    }
+
+    int m_value;
+};
+
+static void OnTimer(wxTimerEvent& event)
+{
+    wxUIActionSimulator sim;
+
+    if ( event.GetId() == 100 )
+    {
+        sim.Char(WXK_NUMPAD9);
+        wxYield();
+    }
+
+    sim.Char(WXK_ESCAPE);
+    wxYield();
+}
+
 TEST_CASE("wxTextCtrl::EventsOnCreate", "[wxTextCtrl][event]")
 {
-    wxWindow* const parent = wxTheApp->GetTopWindow();
+    SECTION("A wxTextCtrl without a validator")
+    {
+        wxWindow* const parent = wxTheApp->GetTopWindow();
 
-    EventCounter updated(parent, wxEVT_TEXT);
+        EventCounter updated(parent, wxEVT_TEXT);
 
-    wxScopedPtr<wxTextCtrl> text(new wxTextCtrl(parent, wxID_ANY, "Hello"));
+        wxScopedPtr<wxTextCtrl> text(new wxTextCtrl(parent, wxID_ANY, "Hello"));
 
-    // Creating the control shouldn't result in any wxEVT_TEXT events.
-    CHECK( updated.GetCount() == 0 );
+        // Creating the control shouldn't result in any wxEVT_TEXT events.
+        CHECK( updated.GetCount() == 0 );
 
-    // Check that modifying using SetValue() it does generate the event, just
-    // to verify that this test works (there are more detailed tests for this
-    // in TextEntryTestCase::TextChangeEvents()).
-    text->SetValue("Bye");
-    CHECK( updated.GetCount() == 1 );
+        // Check that modifying using SetValue() it does generate the event, just
+        // to verify that this test works (there are more detailed tests for this
+        // in TextEntryTestCase::TextChangeEvents()).
+        text->SetValue("Bye");
+        CHECK( updated.GetCount() == 1 );
+    }
+#if 0
+    SECTION("A wxTextCtrl with a validator (in a wxDialog)")
+    {
+        wxWindow* const parent = wxTheApp->GetTopWindow();
+
+        MyDialog dlg(parent);
+        dlg.Bind(wxEVT_TIMER, &OnTimer);
+
+        wxTimer timer;
+        timer.SetOwner(&dlg);
+        timer.StartOnce(200);
+
+        dlg.ShowModal();
+
+        // A Control with a validator shouldn't result in any wxEVT_TEXT events
+        // being sent when the dialog is shown.
+        CHECK( !dlg.IsTextEventGenerated() );
+
+        // One more time, but try to type something in the text control.
+
+        timer.SetOwner(&dlg, 100);
+        timer.StartOnce(200);
+
+        dlg.ShowModal();
+
+        // Check that the event is still generated if we type something though.
+        CHECK( dlg.IsTextEventGenerated() );
+    }
+#endif
 }
 
 #endif //wxUSE_TEXTCTRL

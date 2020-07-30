@@ -13,6 +13,7 @@
 #include "wx/dialog.h"
 #include "wx/dynarray.h"
 #include "wx/frame.h"
+#include "wx/hashset.h"
 #include "wx/listbox.h"
 #include "wx/string.h"
 
@@ -32,6 +33,7 @@ public:
     void OnQuit(wxCommandEvent& event);
     void OnTestDialog(wxCommandEvent& event);
     void OnToggleBell(wxCommandEvent& event);
+    void OnToggleInteractive(wxCommandEvent& event);
 
 private:
     wxListBox *m_listbox;
@@ -39,6 +41,8 @@ private:
 
     wxDECLARE_EVENT_TABLE();
 };
+
+WX_DECLARE_HASH_SET(wxWindow*, wxPointerHash, wxPointerEqual, InvalidWindowsSet);
 
 class MyDialog : public wxDialog
 {
@@ -49,12 +53,16 @@ public:
             const long style = wxDEFAULT_DIALOG_STYLE);
 
     void OnChangeValidator(wxCommandEvent& event);
+    void OnValidate(wxValidationStatusEvent& event);
+    void OnUpdateUI(wxUpdateUIEvent& event);
 
     wxTextCtrl *m_text;
     wxComboBox *m_combobox;
 
     wxTextCtrl *m_numericTextInt;
     wxTextCtrl *m_numericTextDouble;
+
+    InvalidWindowsSet m_invalidWins;
 };
 
 // ----------------------------------------------------------------------------
@@ -184,6 +192,7 @@ enum
 
     VALIDATE_TEST_DIALOG,
     VALIDATE_TOGGLE_BELL,
+    VALIDATE_TOGGLE_INTERACTIVE,
 
     VALIDATE_TEXT,
     VALIDATE_TEXT2,

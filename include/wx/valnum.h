@@ -16,7 +16,7 @@
 #if wxUSE_VALIDATORS
 
 #include "wx/textentry.h"
-#include "wx/validate.h"
+#include "wx/valtext.h"
 
 // This header uses std::numeric_limits<>::min/max, but these symbols are,
 // unfortunately, often defined as macros and the code here wouldn't compile in
@@ -32,27 +32,23 @@ enum wxNumValidatorStyle
     wxNUM_VAL_DEFAULT               = 0x0,
     wxNUM_VAL_THOUSANDS_SEPARATOR   = 0x1,
     wxNUM_VAL_ZERO_AS_BLANK         = 0x2,
-    wxNUM_VAL_NO_TRAILING_ZEROES    = 0x4
+    wxNUM_VAL_NO_TRAILING_ZEROES    = 0x4,
+    wxNUM_VAL_LAZY_VALIDATION       = 0x8
 };
 
 // ----------------------------------------------------------------------------
 // Base class for all numeric validators.
 // ----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxNumValidatorBase : public wxValidator
+class WXDLLIMPEXP_CORE wxNumValidatorBase : public wxTextEntryValidator
 {
 public:
     // Change the validator style. Usually it's specified during construction.
     void SetStyle(int style) { m_style = style; }
 
 
-    // Override base class method to not do anything but always return success:
-    // we don't need this as we do our validation on the fly here.
-    virtual bool Validate(wxWindow * WXUNUSED(parent)) wxOVERRIDE { return true; }
-
-    // Override base class method to check that the window is a text control or
-    // combobox.
-    virtual void SetWindow(wxWindow *win) wxOVERRIDE;
+    // Override base class method.
+    virtual bool Validate(wxWindow* parent) wxOVERRIDE;
 
 protected:
     wxNumValidatorBase(int style)
@@ -60,7 +56,8 @@ protected:
         m_style = style;
     }
 
-    wxNumValidatorBase(const wxNumValidatorBase& other) : wxValidator(other)
+    wxNumValidatorBase(const wxNumValidatorBase& other)
+        : wxTextEntryValidator(other)
     {
         m_style = other.m_style;
     }
@@ -70,10 +67,7 @@ protected:
         return (m_style & style) != 0;
     }
 
-    // Get the text entry of the associated control. Normally shouldn't ever
-    // return NULL (and will assert if it does return it) but the caller should
-    // still test the return value for safety.
-    wxTextEntry *GetTextEntry() const;
+    bool IsLazyValidation() const { return HasFlag(wxNUM_VAL_LAZY_VALIDATION); }
 
     // Convert wxNUM_VAL_THOUSANDS_SEPARATOR and wxNUM_VAL_NO_TRAILING_ZEROES
     // bits of our style to the corresponding wxNumberFormatter::Style values.
@@ -315,6 +309,7 @@ protected:
 
     // Implement wxNumValidatorBase pure virtual method.
     virtual bool IsCharOk(const wxString& val, int pos, wxChar ch) const wxOVERRIDE;
+    virtual wxString IsValid(const wxString& newval) const wxOVERRIDE;
 
 private:
     // Minimal and maximal values accepted (inclusive).
@@ -419,6 +414,7 @@ protected:
 
     // Implement wxNumValidatorBase pure virtual method.
     virtual bool IsCharOk(const wxString& val, int pos, wxChar ch) const wxOVERRIDE;
+    virtual wxString IsValid(const wxString& newval) const wxOVERRIDE;
 
 private:
     // Maximum number of decimals digits after the decimal separator.

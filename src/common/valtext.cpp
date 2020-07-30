@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "wx/clipbrd.h"
 #include "wx/combo.h"
 
 // ----------------------------------------------------------------------------
@@ -54,6 +55,150 @@ static bool wxIsNumeric(const wxString& val)
 }
 
 // ----------------------------------------------------------------------------
+// wxTextEntryValidator
+// ----------------------------------------------------------------------------
+
+void wxTextEntryValidator::SetWindow(wxWindow *win)
+{
+    wxValidator::SetWindow(win);
+
+    if ( GetTextEntry() != NULL )
+    {
+        Bind(wxEVT_TEXT, &wxTextEntryValidator::OnText, this);
+        Bind(wxEVT_TEXT_PASTE, &wxTextEntryValidator::OnPasteText, this);
+        Bind(wxEVT_VALIDATE_ERROR, &wxTextEntryValidator::OnValidate, this);
+
+        if ( ShouldValidateOnFocusLost() )
+        {
+            Bind(wxEVT_KILL_FOCUS, &wxTextEntryValidator::OnKillFocus, this);
+        }
+
+        wxWindow* const tlw = wxGetTopLevelParent(win);
+        if ( wxDynamicCast(tlw, wxDialog) )
+        {
+            Bind(wxEVT_INIT_DIALOG, &wxTextEntryValidator::OnInitDialog, this);
+        }
+        else
+        {
+            m_skipTextEvent = true;
+        }
+    }
+    else
+    {
+        wxFAIL_MSG(
+            "wxTextEntryValidator can only be used with wxTextCtrl, wxComboBox "
+            "or wxComboCtrl"
+        );
+    }
+}
+
+wxTextEntry *wxTextEntryValidator::GetTextEntry() const
+{
+#if wxUSE_TEXTCTRL
+    if (wxDynamicCast(m_validatorWindow, wxTextCtrl))
+    {
+        return (wxTextCtrl*)m_validatorWindow;
+    }
+#endif
+
+#if wxUSE_COMBOBOX
+    if (wxDynamicCast(m_validatorWindow, wxComboBox))
+    {
+        return (wxComboBox*)m_validatorWindow;
+    }
+#endif
+
+#if wxUSE_COMBOCTRL
+    if (wxDynamicCast(m_validatorWindow, wxComboCtrl))
+    {
+        return (wxComboCtrl*)m_validatorWindow;
+    }
+#endif
+
+    return NULL;
+}
+
+void wxTextEntryValidator::OnInitDialog(wxInitDialogEvent& WXUNUSED(event))
+{
+    m_skipTextEvent = true;
+}
+
+void wxTextEntryValidator::OnText(wxCommandEvent& event)
+{
+    // N.B. wxValidator::DoValidate() tries to optimize the validation process
+    // by completely ignoring the validation if the entry was valid and no change
+    // has occurred in the meantime. which is not the case if this handler is called.
+    SetValidationNeeded();
+
+    if ( IsInteractive() )
+    {
+        DoValidate(NULL, wxVALIDATOR_NO_POPUP);
+    }
+
+    event.Skip(m_skipTextEvent);
+}
+
+void wxTextEntryValidator::OnPasteText(wxClipboardTextEvent& event)
+{
+#if wxUSE_CLIPBOARD
+    wxTextEntry * const entry = GetTextEntry();
+    if ( !entry )
+        return;
+
+    wxClipboardLocker clipLock;
+    if ( !clipLock )
+        return;
+
+    wxTextDataObject data;
+
+    if ( wxTheClipboard->IsSupported(data.GetFormat())
+            && wxTheClipboard->GetData(data) )
+    {
+        wxString text = entry->GetValue();
+
+        long from, to;
+        entry->GetSelection(&from, &to);
+
+        if ( from != to )
+        {
+            // Replace selection with the pasted text.
+            text.replace(from, (to - from), data.GetText());
+        }
+        else
+        {
+            text.insert(entry->GetInsertionPoint(), data.GetText());
+        }
+
+        if ( IsValid(text).empty() )
+        {
+            // Accept the pasted text.
+            event.Skip();
+        }
+    }
+#else
+    event.Skip();
+#endif // wxUSE_CLIPBOARD
+}
+
+void wxTextEntryValidator::OnValidate(wxValidationStatusEvent& event)
+{
+    if ( !event.CanPopup() )
+        return;
+
+    const wxString& errormsg = event.GetErrorMessage();
+
+    m_validatorWindow->SetFocus();
+    wxMessageBox(errormsg, _("Validation conflict"),
+                 wxOK | wxICON_EXCLAMATION, NULL);
+}
+
+void wxTextEntryValidator::OnKillFocus(wxFocusEvent& event)
+{
+    event.Skip();
+    DoValidate(NULL, wxVALIDATOR_NO_POPUP);
+}
+
+// ----------------------------------------------------------------------------
 // wxTextValidator
 // ----------------------------------------------------------------------------
 
@@ -69,7 +214,7 @@ wxTextValidator::wxTextValidator(long style, wxString *val)
 }
 
 wxTextValidator::wxTextValidator(const wxTextValidator& val)
-    : wxValidator()
+    : wxTextEntryValidator()
 {
     Copy(val);
 }
@@ -94,37 +239,6 @@ bool wxTextValidator::Copy(const wxTextValidator& val)
     return true;
 }
 
-wxTextEntry *wxTextValidator::GetTextEntry()
-{
-#if wxUSE_TEXTCTRL
-    if (wxDynamicCast(m_validatorWindow, wxTextCtrl))
-    {
-        return (wxTextCtrl*)m_validatorWindow;
-    }
-#endif
-
-#if wxUSE_COMBOBOX
-    if (wxDynamicCast(m_validatorWindow, wxComboBox))
-    {
-        return (wxComboBox*)m_validatorWindow;
-    }
-#endif
-
-#if wxUSE_COMBOCTRL
-    if (wxDynamicCast(m_validatorWindow, wxComboCtrl))
-    {
-        return (wxComboCtrl*)m_validatorWindow;
-    }
-#endif
-
-    wxFAIL_MSG(
-        "wxTextValidator can only be used with wxTextCtrl, wxComboBox, "
-        "or wxComboCtrl"
-    );
-
-    return NULL;
-}
-
 // Called when the value in the window must be validated.
 // This function can pop up an error message.
 bool wxTextValidator::Validate(wxWindow *parent)
@@ -141,10 +255,7 @@ bool wxTextValidator::Validate(wxWindow *parent)
 
     if ( !errormsg.empty() )
     {
-        m_validatorWindow->SetFocus();
-        wxMessageBox(errormsg, _("Validation conflict"),
-                     wxOK | wxICON_EXCLAMATION, parent);
-
+        SendErrorEvent(errormsg);
         return false;
     }
 
