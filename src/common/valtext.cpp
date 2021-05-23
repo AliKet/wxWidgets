@@ -32,6 +32,7 @@
 
 #include "wx/clipbrd.h"
 #include "wx/combo.h"
+#include "wx/regex.h"
 
 // ----------------------------------------------------------------------------
 // global helpers
@@ -462,6 +463,47 @@ bool wxTextValidator::ContainsExcludedCharacters(const wxString& str) const
 
     return false;
 }
+
+#if wxUSE_REGEX
+// ----------------------------------------------------------------------------
+// wxRegexTextValidator implementation
+// ----------------------------------------------------------------------------
+wxIMPLEMENT_DYNAMIC_CLASS(wxRegexTextValidator, wxTextValidator);
+
+wxRegexTextValidator::wxRegexTextValidator() {}
+
+wxRegexTextValidator::wxRegexTextValidator(const wxString& pattern,
+                                           const wxString& intent,
+                                           long style, wxString* str)
+    : wxTextValidator(style, str), m_regex(new wxRegEx), m_intent(intent)
+{
+    if ( !m_regex->Compile(pattern, wxRE_ADVANCED) )
+    {
+        wxFAIL_MSG("Invalid regular expression passed to wxRegexTextValidator ctor!");
+    }
+}
+
+wxObject* wxRegexTextValidator::Clone() const
+{
+    return new wxRegexTextValidator(*this);
+}
+
+wxString wxRegexTextValidator::IsValid(const wxString& str) const
+{
+    wxASSERT_MSG( (m_regex && m_regex->IsValid()),
+        "wxRegexTextValidator not properly initialized!" );
+
+    wxString errmsg = wxTextValidator::IsValid(str);
+
+    if ( errmsg.empty() && !m_regex->Matches(str) )
+    {
+        errmsg = wxString::Format(_("'%s' is not a valid %s"), str, m_intent);
+    }
+
+    return errmsg;
+}
+
+#endif // wxUSE_REGEX
 
 #endif
   // wxUSE_VALIDATORS && (wxUSE_TEXTCTRL || wxUSE_COMBOBOX)
