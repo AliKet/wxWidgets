@@ -479,7 +479,15 @@ wxRegexTextValidator::wxRegexTextValidator(const wxString& pattern,
                                            long style, wxString* str)
     : wxTextValidator(style, str), m_regex(new wxRegEx), m_intent(intent)
 {
-    if ( !m_regex->Compile(pattern, wxRE_ADVANCED) )
+    // Use wxRE_ADVANCED flag if available
+    const int flag =
+#ifdef wxHAS_REGEX_ADVANCED
+        wxRE_ADVANCED;
+#else
+        wxRE_DEFAULT;
+#endif
+
+    if ( !m_regex->Compile(pattern, flag) )
     {
         wxFAIL_MSG("Invalid regular expression passed to wxRegexTextValidator ctor!");
     }
