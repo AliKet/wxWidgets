@@ -64,10 +64,10 @@ void wxGenericDragImage::Init()
 {
     m_isDirty = false;
     m_isShown = false;
-    m_windowDC = NULL;
     m_window = NULL;
     m_fullScreen = false;
 #ifndef wxHAS_NATIVE_OVERLAY
+    m_windowDC = NULL;
     m_pBackingBitmap = NULL;
 #endif
 }
