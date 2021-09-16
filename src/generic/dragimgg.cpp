@@ -55,7 +55,9 @@ wxIMPLEMENT_DYNAMIC_CLASS(wxGenericDragImage, wxObject);
 
 wxGenericDragImage::~wxGenericDragImage()
 {
+#ifndef wxHAS_NATIVE_OVERLAY
     delete m_windowDC;
+#endif
 }
 
 void wxGenericDragImage::Init()
