@@ -677,6 +677,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseMove(pt.x + 5, pt.y);
     wxYield();
 
+    sim.MouseMove(pt.x, pt.y + 5);
+    wxYield();
+
     sim.MouseMove(pt.x + 50, pt.y + 50);
     wxYield();
 
