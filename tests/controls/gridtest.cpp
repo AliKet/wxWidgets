@@ -662,21 +662,25 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
 
     wxUIActionSimulator sim;
-
+/*
     //We add the extra 10 to ensure that we are inside the cell
     wxPoint pt = m_grid->ClientToScreen(wxPoint(m_grid->GetRowLabelSize() + 10,
                                                 m_grid->GetColLabelSize() + 10)
                                                 );
+*/
+    wxRect rect = m_grid->CellToRect(0, 0);
+    wxPoint pt = m_grid->CalcScrolledPosition(rect.GetPosition());
+    pt = m_grid->ClientToScreen(pt + wxPoint(m_grid->GetRowLabelSize(),
+                                             m_grid->GetColLabelSize())
+                                    + wxPoint(4, 4));
 
     sim.MouseMove(pt);
     wxYield();
 
-    wxMilliSleep(200);
-
     sim.MouseDown();
     wxYield();
 
-    sim.MouseMove(pt.x + 5, pt.y);
+    sim.MouseMove(pt.x + 5, pt.y + 5);
     wxYield();
 
     sim.MouseMove(pt.x + 50, pt.y + 50);
