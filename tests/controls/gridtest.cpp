@@ -29,12 +29,12 @@
 #include "waitforpaint.h"
 
 // Works locally, but not when run on Github CI.
-#define wxRELEASE_BUGGY_CAPTURE() \
-    if ( IsAutomaticTest() ) {          \
-        wxWindow* const win = wxWindow::GetCapture(); \
-        if ( win ) \
-            win->ReleaseMouse(); \
-    }
+#if defined(__WXGTK__) && !defined(__WXGTK3__)
+    #define wxSKIP_AUTOMATIC_TEST_IF_GTK2() \
+        if ( IsAutomaticTest() ) return
+#else
+    #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
+#endif
 
 
 namespace
@@ -624,7 +624,11 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxRELEASE_BUGGY_CAPTURE()
+    wxWindow* const win = wxWindow::GetCapture();
+    if ( win )
+        win->ReleaseMouse();
+
+    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     EventCounter colsize(m_grid, wxEVT_GRID_COL_SIZE);
     EventCounter rowsize(m_grid, wxEVT_GRID_ROW_SIZE);
@@ -664,7 +668,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxRELEASE_BUGGY_CAPTURE()
+    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
 
@@ -1460,7 +1464,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxRELEASE_BUGGY_CAPTURE()
+    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     SECTION("Default") {}
     SECTION("Native header") { m_grid->UseNativeColHeader(); }
@@ -1507,7 +1511,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxRELEASE_BUGGY_CAPTURE()
+    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     SECTION("Default") {}
     SECTION("Native header")
