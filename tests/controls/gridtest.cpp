@@ -624,6 +624,10 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     if ( !EnableUITests() )
         return;
 
+    wxWindow* const win = wxWindow::GetCapture();
+    if ( win )
+        win->ReleaseMouse();
+
     wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     EventCounter colsize(m_grid, wxEVT_GRID_COL_SIZE);
