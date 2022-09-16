@@ -33,7 +33,7 @@
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2() \
         if ( IsAutomaticTest() ) { \
             WARN("Skipping test not working in automatic mode"); \
-            return;
+            return; \
         }
 #else
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
