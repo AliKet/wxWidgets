@@ -628,10 +628,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     sim.MouseMove(pt);
     wxYield();
 
-    // Needed by GTK2
-    sim.MouseMove(pt + wxPoint(0, 2));
-    wxYield();
-
     sim.MouseDown();
     wxYield();
 
@@ -664,6 +660,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
         return;
 
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
+
+    m_grid->SetFocus();
+    wxYield();
 
     wxUIActionSimulator sim;
 
@@ -1480,10 +1479,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     wxYield();
     sim.MouseMove(point);
 
-    // Needed by GTK2
-    wxYield();
-    sim.MouseMove(point + wxPoint(0, 2));
-
     wxYield();
     sim.MouseDown();
 
@@ -1537,9 +1532,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     // Drag to reach the minimal width.
     wxYield();
     sim.MouseMove(point);
-    wxYield();
-    // Needed by GTK2
-    sim.MouseMove(point + wxPoint(0, 2));
     wxYield();
     sim.MouseDown();
     wxYield();
