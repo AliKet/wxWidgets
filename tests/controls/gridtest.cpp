@@ -29,7 +29,7 @@
 #include "waitforpaint.h"
 
 // Works locally, but not when run on Github CI.
-#if defined(__WXGTK__) && !defined(__WXGTK3__)
+#if defined(__WXGTK__) && !defined(__WXGTK1__)
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2() \
         if ( IsAutomaticTest() ) return
 #else
@@ -638,6 +638,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     sim.MouseMove(pt);
     wxYield();
 
+    sim.MouseMove(pt + wxPoint(0, 2));
+    wxYield();
+
     sim.MouseDown();
     wxYield();
 
@@ -651,6 +654,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
 
     pt = m_grid->ClientToScreen(wxPoint(5, m_grid->GetColLabelSize() +
                                         m_grid->GetRowSize(0)));
+
+    sim.MouseMove(pt + wxPoint(2, 0));
+    wxYield();
 
     sim.MouseDragDrop(pt.x, pt.y, pt.x, pt.y + 50);
 
@@ -1488,6 +1494,9 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     sim.MouseMove(point);
 
     wxYield();
+    sim.MouseMove(point + wxPoint(0, 2));
+
+    wxYield();
     sim.MouseDown();
 
     wxYield();
@@ -1542,6 +1551,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     // Drag to reach the minimal width.
     wxYield();
     sim.MouseMove(point);
+    wxYield();
+    sim.MouseMove(point + wxPoint(0, 2));
     wxYield();
     sim.MouseDown();
     wxYield();
