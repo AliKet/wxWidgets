@@ -28,14 +28,6 @@
 
 #include "waitforpaint.h"
 
-// Works locally, but not when run on Github CI.
-#if defined(__WXGTK__) && !defined(__WXGTK1__)
-    #define wxSKIP_AUTOMATIC_TEST_IF_GTK2() \
-        if ( IsAutomaticTest() ) return
-#else
-    #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
-#endif
-
 
 namespace
 {
@@ -626,8 +618,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
-
     EventCounter colsize(m_grid, wxEVT_GRID_COL_SIZE);
     EventCounter rowsize(m_grid, wxEVT_GRID_ROW_SIZE);
 
@@ -638,6 +628,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     sim.MouseMove(pt);
     wxYield();
 
+    // Needed by GTK2
     sim.MouseMove(pt + wxPoint(0, 2));
     wxYield();
 
@@ -671,8 +662,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
 #if wxUSE_UIACTIONSIMULATOR
     if ( !EnableUITests() )
         return;
-
-    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
 
@@ -1468,8 +1457,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     if ( !EnableUITests() )
         return;
 
-    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
-
     SECTION("Default") {}
     SECTION("Native header") { m_grid->UseNativeColHeader(); }
 
@@ -1493,6 +1480,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
     wxYield();
     sim.MouseMove(point);
 
+    // Needed by GTK2
     wxYield();
     sim.MouseMove(point + wxPoint(0, 2));
 
@@ -1517,8 +1505,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
 #if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__))
     if ( !EnableUITests() )
         return;
-
-    wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
     SECTION("Default") {}
     SECTION("Native header")
@@ -1552,6 +1538,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
     wxYield();
     sim.MouseMove(point);
     wxYield();
+    // Needed by GTK2
     sim.MouseMove(point + wxPoint(0, 2));
     wxYield();
     sim.MouseDown();
