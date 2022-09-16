@@ -670,6 +670,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     wxSKIP_AUTOMATIC_TEST_IF_GTK2()
 
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
+    EventCounter setFocus(m_grid, wxEVT_SET_FOCUS);
 
     wxUIActionSimulator sim;
 
@@ -693,6 +694,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseUp();
     wxYield();
 
+    CHECK( setFocus.GetCount() == 1 );
     CHECK(select.GetCount() == 1);
 #endif
 }
