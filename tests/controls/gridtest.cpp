@@ -352,6 +352,8 @@ protected:
 
 GridTestCase::GridTestCase() : m_tempGrid(NULL)
 {
+    REQUIRE( wxWindow::GetCapture() == NULL );
+
     m_grid = new TestableGrid(wxTheApp->GetTopWindow());
     m_grid->CreateGrid(10, 2);
     m_grid->SetSize(400, 200);
@@ -623,10 +625,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
 #if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) && !defined(__WXUNIVERSAL__)
     if ( !EnableUITests() )
         return;
-
-    wxWindow* const win = wxWindow::GetCapture();
-    if ( win )
-        win->ReleaseMouse();
 
     wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
