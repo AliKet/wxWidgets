@@ -661,8 +661,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
 
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
 
-    m_grid->SetFocus();
-    wxYield();
+    CHECK(m_grid->HasFocus());
 
     wxUIActionSimulator sim;
 
