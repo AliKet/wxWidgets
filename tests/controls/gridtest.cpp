@@ -29,7 +29,7 @@
 #include "waitforpaint.h"
 
 // Works locally, but not when run on Github CI.
-#if defined(__WXGTK__)/* && !defined(__WXGTK3__)*/
+#if defined(__WXGTK__) && !defined(__WXGTK3__)
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2() \
         if (IsAutomaticTest()) return
 #else
@@ -682,16 +682,17 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseDown();
     wxYield();
 
+    sim.MouseMove(pt.x + 5, pt.y);
+    wxYield();
+
     sim.MouseMove(pt.x + 50, pt.y + 50);
     wxYield();
 
     sim.MouseUp();
     wxYield();
 
-    CHECK( setFocus.GetCount() == 1 );
-    //CHECK(select.GetCount() == 1);
-    if ( select.GetCount() != 1 )
-        WARN("Grid::RangeSelect: select.GetCount() != 1");
+    CHECK(setFocus.GetCount() == 1);
+    CHECK(select.GetCount() == 1);
 #endif
 }
 
