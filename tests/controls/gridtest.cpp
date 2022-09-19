@@ -681,7 +681,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseDown();
     wxYield();
 
-    sim.MouseMove(pt.x + 50, pt.y);
+    sim.MouseMove(pt.x + 5, pt.y + 5);
     wxYield();
 
     sim.MouseMove(pt.x + 50, pt.y + 50);
@@ -689,13 +689,6 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
 
     sim.MouseUp();
     wxYield();
-
-    WaitForPaint waitForPaint(m_grid->GetGridWindow());
-
-    m_grid->Refresh();
-    m_grid->Update();
-
-    waitForPaint.YieldUntilPainted();
 
     CHECK(select.GetCount() == 1);
 #endif
