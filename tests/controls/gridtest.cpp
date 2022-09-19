@@ -666,6 +666,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
 
     //wxSKIP_AUTOMATIC_TEST_IF_GTK2();
 
+    EventCounter cell(m_grid, wxEVT_GRID_SELECT_CELL);
     EventCounter select(m_grid, wxEVT_GRID_RANGE_SELECTED);
 
     wxUIActionSimulator sim;
@@ -690,6 +691,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseUp();
     wxYield();
 
+    CHECK(cell.GetCount() == 1);
     CHECK(select.GetCount() == 1);
 #endif
 }
