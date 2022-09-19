@@ -691,7 +691,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
     sim.MouseUp();
     wxYield();
 
-    CHECK(cell.GetCount() == 1);
+    CHECK(cell.GetCount() != 1);
     CHECK(select.GetCount() == 1);
 #endif
 }
