@@ -97,9 +97,9 @@ void ListCtrlTestCase::EditLabel()
     m_list->InsertColumn(0, "Column 0");
     m_list->InsertItem(0, "foo");
     m_list->EditLabel(0);
-
+    wxYield();
     m_list->EndEditLabel(true);
-
+    wxYield();
     CHECK(editItem.GetCount() == 1);
     CHECK(endEditItem.GetCount() == 1);
 }
