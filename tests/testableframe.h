@@ -11,6 +11,13 @@
 
 #include <unordered_map>
 
+#ifdef __WXQT__
+    #if wxUSE_UIACTIONSIMULATOR
+    #undef wxUSE_UIACTIONSIMULATOR
+    #define wxUSE_UIACTIONSIMULATOR 0
+    #endif
+#endif
+
 class wxTestableFrame : public wxFrame
 {
 public:

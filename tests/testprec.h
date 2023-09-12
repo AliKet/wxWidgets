@@ -21,7 +21,7 @@
 // so they're disabled there by default. This really, really needs to be fixed,
 // but for now having the UI tests always failing is not helpful as it prevents
 // other test failures from being noticed, so disable them there.
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXQT__)
     #define WXUISIM_TEST(test) if ( EnableUITests() ) { CPPUNIT_TEST(test) }
 #else
     #define WXUISIM_TEST(test)
