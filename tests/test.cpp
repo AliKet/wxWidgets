@@ -492,7 +492,7 @@ bool EnableUITests()
 
         if ( s_enabled == -1 )
         {
-#if defined(__WXMSW__) || defined(__WXGTK__)
+#if defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXQT__)
             s_enabled = 1;
 #else // !(__WXMSW__ || __WXGTK__)
             s_enabled = 0;
