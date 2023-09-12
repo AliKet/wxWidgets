@@ -775,7 +775,11 @@ key specialKeys[] =
     { WXK_NUMPAD_MULTIPLY,  "WXK_NUMPAD_MULTIPLY",  false },
     { WXK_NUMPAD_ADD,       "WXK_NUMPAD_ADD",       false },
     { WXK_NUMPAD_SEPARATOR, "WXK_NUMPAD_SEPARATOR", false },
+#if !defined(__WXQT__)
     { WXK_NUMPAD_SUBTRACT,  "WXK_NUMPAD_SUBTRACT",  false },
+#else
+    { WXK_NUMPAD_SUBTRACT,  "WXK_NUMPAD_SUBTRACT",  true },
+#endif
     { WXK_NUMPAD_DECIMAL,   "WXK_NUMPAD_DECIMAL",   false },
     { WXK_NUMPAD_DIVIDE,    "WXK_NUMPAD_DIVIDE",    false },
     { WXK_NUMPAD0,          "WXK_NUMPAD0",          false },

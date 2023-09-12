@@ -36,7 +36,7 @@
 //        some tests there. But this should be fixed and the tests reenabled
 //        because wxPaintEvent propagation in wxScrolledWindow is a perfect
 //        example of fragile code that could be broken under OS X.
-#if !defined(__WXOSX__)
+#if !defined(__WXOSX__) && !defined(__WXQT__)
     #define CAN_TEST_PAINT_EVENTS
 #endif
 

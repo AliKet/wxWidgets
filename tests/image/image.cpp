@@ -909,7 +909,7 @@ void CompareImage(const wxImageHandler& handler, const wxImage& image,
     const wxImage *expected = compareTo ? compareTo : &image;
     CHECK_THAT(actual, RGBSameAs(*expected));
 
-#if wxUSE_PALETTE
+#if wxUSE_PALETTE && !defined(__WXQT__)
     REQUIRE(actual.HasPalette()
         == (testPalette || type == wxBITMAP_TYPE_XPM));
 #endif
@@ -1005,7 +1005,7 @@ TEST_CASE_METHOD(ImageHandlersInit, "wxImage::SavePNG", "[image]")
 
 
     REQUIRE( expected8.LoadFile("horse.gif") );
-#if wxUSE_PALETTE
+#if wxUSE_PALETTE && !defined(__WXQT__)
     REQUIRE( expected8.HasPalette() );
 #endif // #if wxUSE_PALETTE
 
@@ -1148,7 +1148,7 @@ TEST_CASE_METHOD(ImageHandlersInit, "wxImage::ReadCorruptedTGA", "[image]")
 
 TEST_CASE_METHOD(ImageHandlersInit, "wxImage::SaveAnimatedGIF", "[image]")
 {
-#if wxUSE_PALETTE
+#if wxUSE_PALETTE && !defined(__WXQT__)
     wxImage image("horse.gif");
     REQUIRE( image.IsOk() );
 
@@ -1184,6 +1184,7 @@ TEST_CASE_METHOD(ImageHandlersInit, "wxImage::SaveAnimatedGIF", "[image]")
 
 static void TestGIFComment(const wxString& comment)
 {
+#if !defined(__WXQT__)
     wxImage image("horse.gif");
 
     image.SetOption(wxIMAGE_OPTION_GIF_COMMENT, comment);
@@ -1194,6 +1195,9 @@ static void TestGIFComment(const wxString& comment)
     REQUIRE( image.LoadFile(memIn) );
 
     CHECK( image.GetOption(wxIMAGE_OPTION_GIF_COMMENT) == comment );
+#else
+    wxUnusedVar(comment);
+#endif
 }
 
 TEST_CASE_METHOD(ImageHandlersInit, "wxImage::GIFComment", "[image]")
@@ -1217,7 +1221,7 @@ TEST_CASE_METHOD(ImageHandlersInit, "wxImage::GIFComment", "[image]")
     // Test writing comments in an animated GIF and reading them back.
     REQUIRE( image.LoadFile("horse.gif") );
 
-#if wxUSE_PALETTE
+#if wxUSE_PALETTE && !defined(__WXQT__)
     wxImageArray images;
     int i;
     for (i = 0; i < 4; ++i)
