@@ -136,10 +136,6 @@ public:
     virtual bool SetBackgroundColour(const wxColour& colour) override;
     virtual bool SetForegroundColour(const wxColour& colour) override;
 
-    // Min/max sizes
-    virtual void SetMinSize(const wxSize& minSize) override;
-    virtual void SetMaxSize(const wxSize& maxSize) override;
-
     QWidget *GetHandle() const override;
 
 #if wxUSE_DRAG_AND_DROP
