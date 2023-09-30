@@ -350,6 +350,8 @@ bool wxWindowQt::Create( wxWindowQt * parent, wxWindowID id, const wxPoint & pos
     // that a generic control, like wxPanel, is being created, so we need a very
     // simple control as a base:
 
+    wxSize size_ = size;
+
     if ( GetHandle() == nullptr )
     {
         if ( style & (wxHSCROLL | wxVSCROLL) )
@@ -364,9 +366,12 @@ bool wxWindowQt::Create( wxWindowQt * parent, wxWindowID id, const wxPoint & pos
         }
         else
             m_qtWindow = new wxQtWidget( parent, this );
+
+        if ( size_.x <= 0 ) size_.x = 20;
+        if ( size_.y <= 0 ) size_.y = 20;
     }
 
-    if ( !wxWindowBase::CreateBase( parent, id, pos, size, style, wxDefaultValidator, name ))
+    if ( !wxWindowBase::CreateBase( parent, id, pos, size_, style, wxDefaultValidator, name ))
         return false;
 
     parent->AddChild( this );
@@ -375,7 +380,7 @@ bool wxWindowQt::Create( wxWindowQt * parent, wxWindowID id, const wxPoint & pos
     if ( pos != wxDefaultPosition )
         p = pos;
 
-    DoMoveWindow( p.x, p.y, size.GetWidth(), size.GetHeight() );
+    DoMoveWindow( p.x, p.y, size_.GetWidth(), size_.GetHeight() );
 
     PostCreation();
 
