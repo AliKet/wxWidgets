@@ -574,7 +574,7 @@ void EventPropagationTestCase::DocView()
     // Ensure that the child that we've just created is the active one.
     child->Activate();
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__) || defined(__WXQT__)
     // There are a lot of hacks related to child frame menu bar handling in
     // wxGTK and, in particular, the code in src/gtk/mdi.cpp relies on getting
     // idle events to really put everything in place. Moreover, as wxGTK uses
