@@ -136,6 +136,8 @@ public:
     /**
         Returns the text in the text entry part of the control.
 
+        @note Always returns non-empty string under wxQt.
+
         @since 3.1.6
     */
     wxString GetTextValue() const;
@@ -189,6 +191,8 @@ public:
 
         @note Setting a range including negative values is silently ignored
         if current base is set to 16.
+
+        @note Backwards ranges are not supported under wxQt.
     */
     void SetRange(int minVal, int maxVal);
 
@@ -362,6 +366,8 @@ public:
     /**
         Returns the text in the text entry part of the control.
 
+        @note Always returns non-empty string under wxQt.
+
         @since 3.1.6
     */
     wxString GetTextValue() const;
@@ -393,6 +399,8 @@ public:
 
     /**
         Sets range of allowable values.
+
+        @note Backwards ranges are not supported under wxQt.
     */
     void SetRange(double minVal, double maxVal);
 

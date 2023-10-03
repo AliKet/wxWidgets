@@ -143,11 +143,15 @@ TEST_CASE_METHOD(SpinCtrlDoubleTestCase,
     CHECK( m_spin->GetMin() == -10.0 );
     CHECK( m_spin->GetMax() == 10.0 );
 
+#ifndef __WXQT__
     //Test backwards ranges
     m_spin->SetRange(75.0, 50.0);
 
     CHECK( m_spin->GetMin() == 75.0 );
     CHECK( m_spin->GetMax() == 50.0 );
+#else
+    WARN("Backwards ranges are not supported under wxQt");
+#endif
 }
 
 TEST_CASE_METHOD(SpinCtrlDoubleTestCase,
@@ -182,7 +186,11 @@ TEST_CASE_METHOD(SpinCtrlDoubleTestCase,
     CHECK( updatedText.GetCount() == 0 );
 
     m_spin->SetValue("");
+#ifndef __WXQT__
     CHECK( m_spin->GetTextValue() == "" );
+#else
+    WARN("Skipping test feature not supported under wxQt");
+#endif
     CHECK( m_spin->GetValue() == 0 );
 
     CHECK( updatedSpin.GetCount() == 0 );
