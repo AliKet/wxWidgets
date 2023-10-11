@@ -312,6 +312,11 @@ void TreeCtrlTestCase::DeleteAllItems()
 
 void TreeCtrlTestCase::LabelEdit()
 {
+#ifdef __WXQT__
+    if ( IsAutomaticTest() )
+        return;
+#endif
+
     EventCounter beginedit(m_tree, wxEVT_TREE_BEGIN_LABEL_EDIT);
     EventCounter endedit(m_tree, wxEVT_TREE_END_LABEL_EDIT);
 

@@ -495,6 +495,9 @@ void wxWindowQt::DoEnable(bool enable)
 
 void wxWindowQt::SetFocus()
 {
+    if ( !GetHandle()->isActiveWindow() )
+        GetHandle()->activateWindow();
+
     GetHandle()->setFocus();
 }
 
