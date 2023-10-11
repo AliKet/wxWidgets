@@ -407,6 +407,9 @@ void wxWindowQt::PostCreation(bool generic)
     else
         SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 
+    GetHandle()->setAttribute(Qt::WA_DontCreateNativeAncestors);
+    GetHandle()->setAttribute(Qt::WA_NativeWindow);
+
 //    // Use custom Qt window flags (allow to turn on or off
 //    // the minimize/maximize/close buttons and title bar)
 //    Qt::WindowFlags qtFlags = GetHandle()->windowFlags();

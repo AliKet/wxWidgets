@@ -14,9 +14,12 @@
 #include "wx/uiaction.h"
 #include "wx/private/uiaction.h"
 
-#include <QtTest/QtTestGui>
+//#define QT_WIDGETS_LIB
+
+#include <QtTest/QtTestGui> // define this -> QT_GUI_LIB
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QAbstractScrollArea>
 
 #include "wx/qt/defs.h"
 #include "wx/qt/private/utils.h"
@@ -25,16 +28,6 @@
 
 using namespace Qt;
 using namespace QTest;
-
-// Apparently {mouse,key}Event() functions signature has changed from QWidget
-// to QWindow at some time during Qt5, but we don't know when exactly. We do
-// know that they take QWindow for 5.2 and, presumably, later versions (but not
-// for whichever version this code was originally written for).
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 2, 0))
-inline QWindow* argForEvents(QWidget* w) { return w->windowHandle(); }
-#else
-inline QWidget* argForEvents(QWidget* w) { return w; }
-#endif
 
 class wxUIActionSimulatorQtImpl : public wxUIActionSimulatorImpl
 {
@@ -52,11 +45,19 @@ public:
     virtual bool MouseDown(int button = wxMOUSE_BTN_LEFT) override;
     virtual bool MouseUp(int button = wxMOUSE_BTN_LEFT) override;
 
+    virtual bool MouseClick(int button = wxMOUSE_BTN_LEFT) override;
+    virtual bool MouseDblClick(int button = wxMOUSE_BTN_LEFT) override;
+
     virtual bool DoKey(int keycode, int modifiers, bool isDown) override;
 
 private:
     // This class has no public ctors, use Get() instead.
-    wxUIActionSimulatorQtImpl() { }
+    wxUIActionSimulatorQtImpl() { m_mousePosition = QCursor::pos(); }
+
+    bool IsModifierKey(int keycode);
+
+    int m_modifiers = wxMOD_NONE;
+    QPoint m_mousePosition;
 
     wxDECLARE_NO_COPY_CLASS(wxUIActionSimulatorQtImpl);
 };
@@ -95,59 +96,115 @@ static MouseButton ConvertMouseButton( int button )
     return qtButton;
 }
 
-
-static bool SimulateMouseButton( MouseAction mouseAction, MouseButton mouseButton )
+static Qt::KeyboardModifiers ConvertToQtModifiers(int modifiers)
 {
-    QPoint mousePosition = QCursor::pos();
+    Qt::KeyboardModifiers qtmodifiers = Qt::NoModifier;
+
+    if ( modifiers & wxMOD_SHIFT )
+        qtmodifiers |= Qt::ShiftModifier;
+    if ( modifiers & wxMOD_ALT )
+        qtmodifiers |= Qt::AltModifier;
+    if ( modifiers & wxMOD_CONTROL )
+        qtmodifiers |= Qt::ControlModifier;
+
+    return qtmodifiers;
+}
+
+static bool SimulateMouseButton( MouseAction mouseAction,
+                                 MouseButton mouseButton,
+                                 QPoint mousePosition,
+                                 Qt::KeyboardModifiers modifiers = Qt::NoModifier )
+{
     QWidget *widget = QApplication::widgetAt( mousePosition );
+
+    if ( widget && !widget->windowHandle() )
+    {
+        widget = widget->nativeParentWidget();
+    }
+
     if ( widget != nullptr )
-        mouseEvent( mouseAction, argForEvents(widget), mouseButton, NoModifier, mousePosition );
+    {
+        QPoint pos = widget->mapFromGlobal(mousePosition);
+        mouseEvent( mouseAction, widget->windowHandle(), mouseButton, modifiers, pos );
+    }
 
     // If we found a widget then we successfully simulated an event:
 
     return widget != nullptr;
 }
 
-static bool SimulateKeyboardKey( KeyAction keyAction, Key key )
+bool wxUIActionSimulatorQtImpl::IsModifierKey(int keycode)
 {
-    QWidget *widget = QApplication::focusWidget();
-    if ( widget != nullptr )
-        keyEvent( keyAction, argForEvents(widget), key );
-
-    // If we found a widget then we successfully simulated an event:
-
-    return widget != nullptr;
-}
-
-bool wxUIActionSimulatorQtImpl::MouseDown( int button )
-{
-    return SimulateMouseButton( MousePress, ConvertMouseButton( button ));
-}
-
-bool wxUIActionSimulatorQtImpl::MouseUp(int button)
-{
-    return SimulateMouseButton( MouseRelease, ConvertMouseButton( button ));
-}
-
-bool wxUIActionSimulatorQtImpl::MouseMove(long x, long y)
-{
-    QCursor::setPos( x, y );
+    switch ( keycode )
+    {
+        case WXK_SHIFT:     m_modifiers |= wxMOD_SHIFT;     break;
+        case WXK_ALT:       m_modifiers |= wxMOD_ALT;       break;
+        case WXK_CONTROL:   m_modifiers |= wxMOD_CONTROL;   break;
+        default:
+            return false;
+    }
 
     return true;
 }
 
+bool wxUIActionSimulatorQtImpl::MouseDown(int button)
+{
+    return SimulateMouseButton( MousePress, ConvertMouseButton( button ),
+                                m_mousePosition, ConvertToQtModifiers( m_modifiers ) );
+}
+
+bool wxUIActionSimulatorQtImpl::MouseUp(int button)
+{
+    return SimulateMouseButton( MouseRelease, ConvertMouseButton( button ),
+                                m_mousePosition, ConvertToQtModifiers( m_modifiers ) );
+}
+
+bool wxUIActionSimulatorQtImpl::MouseMove(long x, long y)
+{
+    m_mousePosition = QPoint( x, y );
+
+    return SimulateMouseButton( QTest::MouseMove, NoButton, m_mousePosition );
+}
+
+bool wxUIActionSimulatorQtImpl::MouseClick(int button)
+{
+    return SimulateMouseButton( QTest::MouseClick, ConvertMouseButton( button ),
+                                m_mousePosition, ConvertToQtModifiers( m_modifiers ) );
+}
+
+bool wxUIActionSimulatorQtImpl::MouseDblClick(int button)
+{
+    return SimulateMouseButton( QTest::MouseDClick, ConvertMouseButton( button ), m_mousePosition );
+}
+
 bool wxUIActionSimulatorQtImpl::DoKey(int keyCode, int modifiers, bool isDown)
 {
+    if ( IsModifierKey(keyCode) )
+    {
+        if ( !isDown )
+            m_modifiers = wxMOD_NONE;
+
+        return true;
+    }
+
+    QWidget *widget = QApplication::focusWidget();
+    if ( !widget )
+        widget = QApplication::activeWindow();
+    if ( !widget )
+        return false;
+
     Qt::KeyboardModifiers qtmodifiers;
     enum Key key;
 
     key = (enum Key) wxQtConvertKeyCode( keyCode, modifiers, qtmodifiers );
 
     wxCHECK_MSG(key, false, wxT("No current key conversion equivalent in Qt"));
-    KeyAction keyAction = isDown ? Press : Release;
-    return SimulateKeyboardKey( keyAction, key );
-}
 
+    KeyAction keyAction = isDown ? Press : Release;
+    keyEvent( keyAction, widget->windowHandle(), key, ConvertToQtModifiers(modifiers) );
+
+    return true;
+}
 
 wxUIActionSimulator::wxUIActionSimulator()
                    : m_impl(wxUIActionSimulatorQtImpl::Get())
