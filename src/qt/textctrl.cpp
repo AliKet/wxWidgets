@@ -793,6 +793,24 @@ void wxTextCtrl::DoSetValue( const wxString &text, int flags )
     }
 }
 
+bool wxTextCtrl::IsEditable() const
+{
+    return !HasFlag(wxTE_READONLY);
+}
+
+void wxTextCtrl::SetEditable(bool editable)
+{
+    long flags = GetWindowStyle();
+
+    if ( editable )
+        flags &= ~wxTE_READONLY;
+    else
+        flags |= wxTE_READONLY;
+
+    SetWindowStyle(flags);
+    m_qtEdit->SetStyleFlags(flags);
+}
+
 QWidget *wxTextCtrl::GetHandle() const
 {
     return (QWidget *) m_qtEdit->GetHandle();

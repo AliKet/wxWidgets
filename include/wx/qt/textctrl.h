@@ -71,6 +71,8 @@ public:
     virtual wxString DoGetValue() const override;
     virtual void DoSetValue(const wxString &text, int flags = 0) override;
     virtual void WriteText(const wxString& text) override;
+    virtual bool IsEditable() const override;
+    virtual void SetEditable(bool editable) override;
 
     virtual QWidget *GetHandle() const override;
 
