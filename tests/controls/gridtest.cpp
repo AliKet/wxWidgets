@@ -22,6 +22,10 @@
 #include "asserthelper.h"
 #include "wx/uiaction.h"
 
+#ifdef __WXMSW__
+    #include "wx/msw/wrapwin.h"
+#endif // __WXMSW__
+
 #ifdef __WXGTK__
     #include "wx/stopwatch.h"
 #endif // __WXGTK__
@@ -34,6 +38,27 @@
         if ( IsAutomaticTest() ) return
 #else
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
+#endif
+
+#ifdef __WXMSW__
+static bool wxIsActiveWindow(HWND hwnd)
+{
+    GUITHREADINFO gui;
+    gui.cbSize = sizeof(GUITHREADINFO);
+
+    if ( !GetGUIThreadInfo(0, &gui) )
+        return false;
+
+    if ( hwnd != gui.hwndActive )
+    {
+        TCHAR className[MAX_PATH];
+        ::GetWindowText(gui.hwndActive, className, _countof(className));
+        wxString cName = className;
+        CHECK(cName == "xxx");
+    }
+
+    return hwnd == gui.hwndActive;
+}
 #endif
 
 namespace
@@ -548,6 +573,11 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
 
     wxUIActionSimulator sim;
 
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)wxTheApp->GetTopWindow()->GetHWND();
+    INFO("wxIsActiveWindow " << wxIsActiveWindow(hwnd));
+#endif
+
     wxPoint pos(m_grid->GetRowLabelSize() + 2, 2);
     pos = m_grid->ClientToScreen(pos);
 
@@ -609,6 +639,11 @@ TEST_CASE_METHOD(GridTestCase, "Grid::SortClick", "[grid]")
 
     wxUIActionSimulator sim;
 
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)wxTheApp->GetTopWindow()->GetHWND();
+    INFO("wxIsActiveWindow " << wxIsActiveWindow(hwnd));
+#endif
+
     wxPoint pos(m_grid->GetRowLabelSize() + 4, 4);
     pos = m_grid->ClientToScreen(pos);
 
@@ -639,6 +674,11 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     EventCounter rowsize(m_grid, wxEVT_GRID_ROW_SIZE);
 
     wxUIActionSimulator sim;
+
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)wxTheApp->GetTopWindow()->GetHWND();
+    INFO("wxIsActiveWindow " << wxIsActiveWindow(hwnd));
+#endif
 
     wxPoint pt = m_grid->ClientToScreen(wxPoint(m_grid->GetRowLabelSize() +
                                                 m_grid->GetColSize(0), 5));
