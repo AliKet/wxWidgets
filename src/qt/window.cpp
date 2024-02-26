@@ -524,10 +524,11 @@ bool wxWindowQt::Show( bool show )
     if ( QWidget *qtWidget = GetHandle() )
     {
         qtWidget->setVisible( show );
-
+/*
         wxShowEvent event(GetId(), show);
         event.SetEventObject(this);
         HandleWindowEvent(event);
+*/
     }
 
     return true;
