@@ -20,6 +20,7 @@
 #include <QPicture>
 
 #ifndef WX_PRECOMP
+    #include "wx/log.h"
     #include "wx/bitmap.h"
     #include "wx/icon.h"
     #include "wx/dcclient.h"
@@ -32,40 +33,10 @@
 #include "wx/tokenzr.h"
 
 #include "wx/private/graphics.h"
+#include "wx/qt/private/converter.h"
 
 #include <memory>
 
-namespace
-{
-
-// Ensure that the given painter is active by calling begin() if it isn't. If
-// it already is, don't do anything.
-class EnsurePainterIsActive
-{
-public:
-    explicit EnsurePainterIsActive(QPainter* painter)
-        : m_painter(painter),
-          m_wasActive(painter->isActive())
-    {
-        if ( !m_wasActive )
-            m_painter->begin(&m_picture);
-    }
-
-    ~EnsurePainterIsActive()
-    {
-        if ( !m_wasActive )
-            m_painter->end();
-    }
-
-private:
-    QPainter* m_painter;
-    QPicture m_picture;
-    bool m_wasActive;
-
-    wxDECLARE_NO_COPY_CLASS(EnsurePainterIsActive);
-};
-
-} // anonymous namespace
 
 class WXDLLIMPEXP_CORE wxQtBrushData : public wxGraphicsObjectRefData
 {
@@ -644,6 +615,12 @@ class WXDLLIMPEXP_CORE wxQtGraphicsContext : public wxGraphicsContext
         const wxSize sz = dc.GetSize();
         m_width = sz.x;
         m_height = sz.y;
+
+        m_internalTransform = m_qtPainter->worldTransform();
+
+        m_qtPainter->setWorldMatrixEnabled(false);
+        m_qtPainter->setClipRect(0, 0, m_width, m_height);
+        m_qtPainter->setWorldMatrixEnabled(true);
     }
 
 protected:
@@ -711,18 +688,23 @@ public:
 
     virtual void Clip(const wxRegion& region) override
     {
-        m_qtPainter->setClipRegion(region.GetHandle());
+        m_qtPainter->setClipping(true);
+        m_qtPainter->setClipRegion(region.GetHandle(), Qt::IntersectClip);
     }
 
     // clips drawings to the rect
     virtual void Clip(wxDouble x, wxDouble y, wxDouble w, wxDouble h) override
     {
-        m_qtPainter->setClipRect(x, y, w, h);
+        m_qtPainter->setClipRect(x, y, w, h, Qt::IntersectClip);
     }
 
     // resets the clipping to original extent
     virtual void ResetClip() override
     {
+        m_qtPainter->setWorldMatrixEnabled(false);
+        m_qtPainter->setClipRect(0, 0, m_width, m_height);
+        m_qtPainter->setWorldMatrixEnabled(true);
+
         m_qtPainter->setClipping(false);
     }
 
@@ -730,7 +712,13 @@ public:
     virtual void
     GetClipBox(wxDouble* x, wxDouble* y, wxDouble* w, wxDouble* h) override
     {
-        const QRectF box = m_qtPainter->clipBoundingRect();
+        QRectF box = m_qtPainter->clipBoundingRect();
+
+        if ( box.isEmpty() )
+        {
+            box = QRectF();
+        }
+
         if ( x )
             *x = box.left();
         if ( y )
@@ -855,15 +843,17 @@ public:
 
     virtual void
     FillPath(const wxGraphicsPath& p,
-             wxPolygonFillMode /*fillStyle = wxWINDING_RULE*/) override
+             wxPolygonFillMode fillStyle = wxWINDING_RULE) override
     {
         if ( m_brush.IsNull() )
         {
             return;
         }
 
-        const QPainterPath*
-            pathData = static_cast<QPainterPath*>(p.GetNativePath());
+        QPainterPath* pathData = static_cast<QPainterPath*>(p.GetNativePath());
+        const Qt::FillRule fillRule = fillStyle == wxWINDING_RULE ? Qt::WindingFill : Qt::OddEvenFill;
+        pathData->setFillRule(fillRule);
+
         const QBrush&
             brush = static_cast<wxQtBrushData*>(m_brush.GetRefData())->getBrush();
         m_qtPainter->fillPath(*pathData, brush);
@@ -894,23 +884,40 @@ public:
     // concatenates this transform with the current transform of this context
     virtual void ConcatTransform(const wxGraphicsMatrix& matrix) override
     {
-        wxGraphicsMatrix currentMatrix = GetTransform();
-        currentMatrix.Concat(matrix);
-        SetTransform(currentMatrix);
+        if ( !m_qtPainter->isActive() )
+            return;
+
+        const wxQtMatrixData*
+            qmatrix = static_cast<const wxQtMatrixData*>(matrix.GetRefData());
+        m_qtPainter->setTransform(qmatrix->GetQTransform(), true);
     }
 
     // sets the transform of this context
     virtual void SetTransform(const wxGraphicsMatrix& matrix) override
     {
+        if ( !m_qtPainter->isActive() )
+            return;
+
         const wxQtMatrixData*
             qmatrix = static_cast<const wxQtMatrixData*>(matrix.GetRefData());
-        m_qtPainter->setTransform(qmatrix->GetQTransform());
+        m_qtPainter->setTransform(m_internalTransform);
+        m_qtPainter->setTransform(qmatrix->GetQTransform(), true);
     }
 
     // gets the matrix of this context
     virtual wxGraphicsMatrix GetTransform() const override
     {
-        const QTransform& transform = m_qtPainter->transform();
+        if ( !m_qtPainter->isActive() )
+            return CreateMatrix(); // return identity
+
+        QTransform transform = m_qtPainter->transform();
+
+        if ( m_internalTransform.isInvertible() )
+        {
+            const auto internalTransformInv = m_internalTransform.inverted();
+            transform *= internalTransformInv;
+        }
+
         wxGraphicsMatrix m;
         m.SetRefData(new wxQtMatrixData(GetRenderer(), transform));
         return m;
@@ -976,13 +983,17 @@ public:
         if ( str.empty() && !descent && !externalLeading )
             return;
 
-        EnsurePainterIsActive active(m_qtPainter);
-
         const wxQtFontData*
             fontData = static_cast<wxQtFontData*>(m_font.GetRefData());
-        m_qtPainter->setFont(fontData->GetFont());
 
-        const QFontMetrics metrics = m_qtPainter->fontMetrics();
+        QFontMetrics metrics(fontData->GetFont());
+
+        if ( m_qtPainter->isActive() )
+        {
+            m_qtPainter->setFont(fontData->GetFont());
+            metrics = m_qtPainter->fontMetrics();
+        }
+
         const QRect boundingRect = metrics.boundingRect(QString(str));
 
         if ( width )
@@ -1002,13 +1013,16 @@ public:
         wxCHECK_RET( !m_font.IsNull(),
                      "wxQtContext::GetPartialTextExtents - no valid font set" );
 
-        EnsurePainterIsActive active(m_qtPainter);
-
         const wxQtFontData*
             fontData = static_cast<wxQtFontData*>(m_font.GetRefData());
-        m_qtPainter->setFont(fontData->GetFont());
 
-        const QFontMetrics metrics = m_qtPainter->fontMetrics();
+        QFontMetrics metrics(fontData->GetFont());
+
+        if ( m_qtPainter->isActive() )
+        {
+            m_qtPainter->setFont(fontData->GetFont());
+            metrics = m_qtPainter->fontMetrics();
+        }
 
         const size_t textLength = text.length();
 
@@ -1043,7 +1057,7 @@ protected:
         while ( tokenizer.HasMoreTokens() )
         {
             const wxString line = tokenizer.GetNextToken();
-            m_qtPainter->drawText(x, y + metrics.ascent(), QString(line));
+            m_qtPainter->drawText(x, y + metrics.ascent(), wxQtConvertString(line));
             y += metrics.lineSpacing();
         }
     }
@@ -1061,7 +1075,8 @@ protected:
         m_qtPainter->drawPixmap(x, y, w, h, pix);
     }
 
-    QPainter* m_qtPainter;
+    QPainter*  m_qtPainter;
+    QTransform m_internalTransform;
 
 private:
     // This pointer may be empty if we don't own m_qtPainter.
@@ -1293,7 +1308,7 @@ wxGraphicsBrush wxQtGraphicsRenderer::CreateBrush(const wxBrush& brush)
 wxGraphicsBrush wxQtGraphicsRenderer::CreateLinearGradientBrush(
     wxDouble x1, wxDouble y1,
     wxDouble x2, wxDouble y2,
-    const wxGraphicsGradientStops& stops, 
+    const wxGraphicsGradientStops& stops,
     const wxGraphicsMatrix& WXUNUSED(matrix))
 {
     wxGraphicsBrush p;
@@ -1306,7 +1321,7 @@ wxGraphicsBrush wxQtGraphicsRenderer::CreateLinearGradientBrush(
 wxGraphicsBrush wxQtGraphicsRenderer::CreateRadialGradientBrush(
     wxDouble startX, wxDouble startY,
     wxDouble endX, wxDouble endY, wxDouble r,
-    const wxGraphicsGradientStops& stops, 
+    const wxGraphicsGradientStops& stops,
     const wxGraphicsMatrix& WXUNUSED(matrix))
 {
     wxGraphicsBrush p;
