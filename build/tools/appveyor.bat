@@ -64,7 +64,7 @@ goto :eof
 
 :cmake_qt
 set SKIPINSTALL=1
-set QT5DIR="C:\Qt\5.11\msvc2015_64"
+set QT5DIR="C:\Qt\5.15.2\msvc2019_64"
 set CMAKE_CONFIGURE_FLAGS=-DCMAKE_PREFIX_PATH=%QT5DIR% -DwxBUILD_TOOLKIT="qt"
 goto cmake
 
@@ -79,7 +79,7 @@ echo.%GENERATOR% | findstr /C:"Visual Studio">nul && (
 )
 
 if "%SKIPTESTS%"=="1" (
-    set BUILD_TESTS=OFF
+    set BUILD_TESTS=ALL
 ) else (
     set BUILD_TESTS=ALL
 )

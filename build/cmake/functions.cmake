@@ -930,6 +930,11 @@ function(wx_add name group)
         add_test(NAME ${target_name}
             COMMAND ${target_name}
             WORKING_DIRECTORY "${wxOUTPUT_DIR}/${wxPLATFORM_LIB_DIR}")
+        add_custom_command(TARGET ${target_name} POST_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E copy
+                                $<TARGET_RUNTIME_DLLS:${target_name}>
+                                $<TARGET_FILE_DIR:${target_name}>
+                           COMMAND_EXPAND_LISTS)
     endif()
 endfunction()
 

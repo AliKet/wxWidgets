@@ -32,6 +32,12 @@ environment:
   GOVERSION: "1.22.1"
   GOPATH: c:\gopath
   matrix:
+  - TOOLSET: cmake_qt
+    GENERATOR: 'Visual Studio 16 2019'
+    ARCH: x64
+    SHARED: ON
+    CONFIGURATION: Release
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - TOOLSET: msbuild
     CONFIGURATION: DLL Release
     ARCH: x64
@@ -52,11 +58,6 @@ environment:
     SHARED: ON
     CONFIGURATION: Release
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-  - TOOLSET: cmake_qt
-    GENERATOR: 'Visual Studio 14 2015 Win64'
-    SHARED: ON
-    CONFIGURATION: Release
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
 clone_depth: 50
 

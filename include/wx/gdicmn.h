@@ -186,7 +186,7 @@ enum wxEllipsizeMode
 // is also defined under macOS, which uses a different resource concept, and
 // may be also defined for any other ports where images don't need to be
 // embedded into the program text in order to be available during run-time.
-#if defined(__WINDOWS__) && wxUSE_WXDIB
+#if defined(__WINDOWS__) && wxUSE_WXDIB && !defined(__WXQT__)
     #define wxHAS_IMAGES_IN_RESOURCES
 #endif
 
