@@ -1331,7 +1331,7 @@ void wxQtListTreeWidget::OnKeyDown(wxKeyEvent& event)
 template<>
 void wxQtEventSignalHandler< QTreeView, wxListCtrl >::HandleDestroyedSignal()
 {
-    if ( !GetHandler() || GetHandler() != this )
+    if ( !this->GetHandler() )
         return;
 
     // This handler is emitted immediately before the QTreeView obj is destroyed
