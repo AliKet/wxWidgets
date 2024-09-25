@@ -82,6 +82,11 @@ jobs:
             cmake_generator: Ninja
             cmake_samples: SOME
             cmake_tests: CONSOLE_ONLY
+          - name: Windows MSVC wxQt
+            cmake_defines: -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
+            cmake_generator: Visual Studio
+            cmake_samples: SOME
+            cmake_tests: ALL
 
     env:
       wxGTK_VERSION: ${{ matrix.gtk_version && matrix.gtk_version || 3 }}
@@ -96,6 +101,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '5.15.2'
+          host: 'windows'
+          arch: 'win64_msvc2019_64'
 
       - name: Set environment variables
         run: |
@@ -115,6 +127,8 @@ jobs:
           cmake_samples=${{ matrix.cmake_samples }}
           if [ -z $cmake_samples ]; then cmake_samples=SOME; fi
           echo wxCMAKE_SAMPLES=$cmake_samples >> $GITHUB_ENV
+
+          echo QT_USE_NATIVE_WINDOWS=1 >> $GITHUB_ENV
 
           # Setting this variable suppresses "Error retrieving accessibility bus address"
           # messages from WebKit tests that we're not interested in.
