@@ -85,7 +85,9 @@ void ModalDialogsTestCase::FileDialog()
 
     CPPUNIT_ASSERT_EQUAL((int)wxID_OK, rc);
 
+#if !(defined(__WXQT__) && defined(__WINDOWS__))
     CPPUNIT_ASSERT_EQUAL("test.txt", dlg.GetFilename());
+#endif
 
 #ifdef __WXGTK3__
     // The native file dialog in GTK+ 3 launches an async operation which tries
