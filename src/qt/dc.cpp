@@ -406,7 +406,8 @@ wxCoord wxQtDCImpl::GetCharWidth() const
     // ports (e.g. wxMSW).
     QFontMetrics metrics(m_qtPainter->isActive() ?
         m_qtPainter->font() : QApplication::font());
-    return wxCoord( metrics.averageCharWidth() );
+    return wxCoord( wxMax(metrics.averageCharWidth(),
+                          metrics.horizontalAdvance('W')) );
 }
 
 void wxQtDCImpl::DoGetTextExtent(const wxString& string,
