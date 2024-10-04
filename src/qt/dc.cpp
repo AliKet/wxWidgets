@@ -407,11 +407,9 @@ wxCoord wxQtDCImpl::GetCharWidth() const
     QFontMetrics metrics(m_qtPainter->isActive() ?
         m_qtPainter->font() : QApplication::font());
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
-    return wxCoord( wxMax(metrics.averageCharWidth(),
-                          metrics.horizontalAdvance('W')) );
+    return wxCoord( metrics.horizontalAdvance('H') );
 #else
-    return wxCoord( wxMax(metrics.averageCharWidth(),
-                          metrics.boundingRect('W').width()) );
+    return wxCoord( metrics.averageCharWidth() + 2 );
 #endif
 }
 
