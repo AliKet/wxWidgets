@@ -30,6 +30,7 @@ TEST_CASE("Ellipsization::NormalCase", "[ellipsization]")
         ".",
         "x",
         "foobar",
+        "WWWWWWW"
         "\xCE\xB1", // U03B1 (GREEK SMALL LETTER ALPHA)
         "Another test",
         "a very very very very very very very long string",
