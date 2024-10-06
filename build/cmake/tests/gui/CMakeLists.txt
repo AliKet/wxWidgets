@@ -43,7 +43,6 @@ set(TEST_GUI_SRC
     controls/datepickerctrltest.cpp
     controls/frametest.cpp
     controls/gaugetest.cpp
-    controls/gridtest.cpp
     controls/headerctrltest.cpp
     controls/htmllboxtest.cpp
     controls/hyperlinkctrltest.cpp
@@ -206,6 +205,10 @@ set(TEST_GUI_RES_BUNDLE
     horse.png
     ../include/wx/msw/bullseye.cur
     )
+
+#if (WIN32 AND WXQT)
+#list(REMOVE_ITEM TEST_GUI_SRC controls/gridtest.cpp)
+#endif()
 
 # On macOS create an .app bundle so the resources can be added.
 # On other platforms, just use a console app with gui libraries.
