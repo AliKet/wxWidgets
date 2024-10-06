@@ -36,6 +36,11 @@
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
 #endif
 
+#ifdef __WXQT__
+#undef wxUSE_UIACTIONSIMULATOR
+#define wxUSE_UIACTIONSIMULATOR 0
+#endif
+
 namespace
 {
 
@@ -194,6 +199,7 @@ void FitGridToMulticell(TestableGrid* grid, const Multicell& multi)
     }
 }
 
+#if wxUSE_UIACTIONSIMULATOR
 // Function used to wait until the given predicate becomes true or timeout
 // expires or the mouse moves away, in which case the test is abandoned.
 bool
@@ -239,7 +245,7 @@ WaitForEventAt(
 
     return true;
 }
-
+#endif
 } // anonymous namespace
 
 namespace Catch
@@ -2832,5 +2838,10 @@ std::string GridAttrMatcher::describe() const
 
     return desc;
 }
+
+#ifdef __WXQT__
+#undef wxUSE_UIACTIONSIMULATOR
+#define wxUSE_UIACTIONSIMULATOR 1
+#endif
 
 #endif //wxUSE_GRID
