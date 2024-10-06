@@ -208,3 +208,10 @@ jobs:
           pushd build_cmake_install_test
           cmake -G "${{ matrix.cmake_generator }}" ${{ matrix.cmake_defines }} ../samples/minimal
           cmake --build .
+
+      - name: Upload Crash Dumps
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@master
+        with:
+          name: crash-dumps
+          path: C:\CrashDump

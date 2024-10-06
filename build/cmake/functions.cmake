@@ -374,6 +374,7 @@ function(wx_set_target_properties target_name)
             wininet
             oleacc
             uxtheme
+            Dbghelp
         )
         target_link_libraries(${target_name}
             PUBLIC ${WIN32_LIBRARIES})

@@ -38,6 +38,7 @@ std::string wxTheCurrentTestClass, wxTheCurrentTestMethod;
 
 #ifdef __WINDOWS__
     #include "wx/msw/msvcrt.h"
+    #include <DbgHelp.h>
 #endif
 
 #ifdef __WXOSX__
@@ -56,6 +57,25 @@ std::string wxTheCurrentTestClass, wxTheCurrentTestMethod;
 #include "wx/evtloop.h"
 
 using namespace std;
+
+#ifdef __WINDOWS__
+LONG WINAPI wxUnhandledExceptionFilter(EXCEPTION_POINTERS* pExceptionPointers)
+{
+    HANDLE hDumpFile = ::CreateFile(L"C:\\CrashDump.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (hDumpFile != INVALID_HANDLE_VALUE) {
+        MINIDUMP_EXCEPTION_INFORMATION dumpInfo;
+        dumpInfo.ExceptionPointers = pExceptionPointers;
+        dumpInfo.ThreadId = GetCurrentThreadId();
+        dumpInfo.ClientPointers = TRUE;
+
+        ::MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hDumpFile, MiniDumpNormal, &dumpInfo, NULL, NULL);
+        ::CloseHandle(hDumpFile);
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
 
 // ----------------------------------------------------------------------------
 // helper classes
@@ -674,6 +694,10 @@ bool TestApp::OnInit()
     wxString testLoc;
     if ( wxGetEnv(wxASCII_STR("WX_TEST_LOCALE"), &testLoc) )
         wxSetlocale(LC_ALL, testLoc);
+
+#ifdef __WINDOWS__
+    ::SetUnhandledExceptionFilter(wxUnhandledExceptionFilter);
+#endif
 
 #if wxUSE_GUI
     // create a parent window to be used as parent for the GUI controls
