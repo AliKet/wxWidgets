@@ -12,9 +12,41 @@
 #include "wx/apptrait.h"
 #include "wx/qt/private/utils.h"
 #include "wx/qt/private/converter.h"
+#include <QtCore/QtGlobal>
 #include <QtCore/QStringList>
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
+
+class wxQtApplication : public QApplication
+{
+public:
+    // Inherit QApplication constructors
+    using QApplication::QApplication;
+
+    virtual bool notify(QObject* receiver, QEvent* event) override
+    {
+        try
+        {
+            return QApplication::notify(receiver, event);
+        }
+        catch (std::exception& e)
+        {
+            qFatal("Error %s sending event %s to object %s (%s)",
+                e.what(), typeid(*event).name(), qPrintable(receiver->objectName()),
+                typeid(*receiver).name());
+        }
+        catch (...)
+        {
+            qFatal("Error <unknown> sending event %s to object %s (%s)",
+                typeid(*event).name(), qPrintable(receiver->objectName()),
+                typeid(*receiver).name());
+        }
+
+        // qFatal aborts, so this isn't really necessary
+        // but you might continue if you use a different logging lib
+        return false;
+    }
+};
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxApp, wxEvtHandler);
 
@@ -62,7 +94,7 @@ bool wxApp::Initialize( int &argc, wxChar **argv )
     format.setSwapBehavior(QSurfaceFormat::SwapBehavior::SingleBuffer);
     QSurfaceFormat::setDefaultFormat(format);
 
-    m_qtApplication.reset(new QApplication(m_qtArgc, m_qtArgv.get()));
+    m_qtApplication.reset(new wxQtApplication(m_qtArgc, m_qtArgv.get()));
 
     // Use the args returned by Qt as it may have deleted (processed) some of them
     // Using QApplication::arguments() forces argument processing

@@ -1516,27 +1516,42 @@ bool wxWindowQt::QtHandleResizeEvent ( QWidget *WXUNUSED( handler ), QResizeEven
 bool wxWindowQt::QtHandleWheelEvent ( QWidget *WXUNUSED( handler ), QWheelEvent *event )
 {
     wxMouseEvent e( wxEVT_MOUSEWHEEL );
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
-    QPoint qPt = event->position().toPoint();
-    wxMouseWheelAxis wheelAxis = event->angleDelta().y() > 0
-                               ? wxMOUSE_WHEEL_VERTICAL : wxMOUSE_WHEEL_HORIZONTAL;
-    int wheelRotation = wheelAxis == wxMOUSE_WHEEL_VERTICAL
-                      ? (event->angleDelta().y() / 8) : (event->angleDelta().x() / 8);
-#else
-    QPoint qPt = event->pos();
-    wxMouseWheelAxis wheelAxis = event->orientation() == Qt::Vertical
-                               ? wxMOUSE_WHEEL_VERTICAL : wxMOUSE_WHEEL_HORIZONTAL;
-    int wheelRotation = event->delta();
-#endif
-    e.SetPosition( wxQtConvertPoint( qPt ) );
-    e.SetEventObject(this);
-
-    e.m_wheelAxis = wheelAxis;
-    e.m_wheelRotation = wheelRotation;
     e.m_linesPerAction = 3;
     e.m_wheelDelta = 120;
+    e.SetEventObject(this);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
+    e.SetPosition( wxQtConvertPoint(event->position().toPoint()) );
+
+    bool processed_X = false,
+         processed_Y = false;
+
+    if ( event->angleDelta().y() != 0 )
+    {
+        e.m_wheelAxis = wxMOUSE_WHEEL_VERTICAL;
+        e.m_wheelRotation = event->angleDelta().y() / 8;
+
+        processed_Y = ProcessWindowEvent( e );
+    }
+
+    if ( event->angleDelta().x() != 0 )
+    {
+        e.m_wheelAxis = wxMOUSE_WHEEL_HORIZONTAL;
+        e.m_wheelRotation = event->angleDelta().x() / 8;
+
+        processed_X = ProcessWindowEvent( e );
+    }
+
+    return processed_X || processed_Y;
+#else
+    e.SetPosition( wxQtConvertPoint(event->pos()) );
+
+    e.m_wheelAxis = event->orientation() == Qt::Vertical
+                  ? wxMOUSE_WHEEL_VERTICAL : wxMOUSE_WHEEL_HORIZONTAL;
+    e.m_wheelRotation = event->delta();
 
     return ProcessWindowEvent( e );
+#endif
 }
 
 
