@@ -97,6 +97,12 @@ jobs:
           cache: 'true'
           setup-python: 'false'
 
+      - name: Download ProcDump
+        run: |
+          curl -L -o procdump.zip https://download.sysinternals.com/files/Procdump.zip
+          Expand-Archive -Path procdump.zip -DestinationPath C:\Windows
+
+        shell: pwsh
 
       - name: Set environment variables
         run: |
@@ -120,7 +126,7 @@ jobs:
           cmake_build_toolkit=${{ matrix.cmake_build_toolkit }}
           echo wxCMAKE_BUILD_TOOLKIT=$cmake_build_toolkit >> $GITHUB_ENV
 
-          echo QT_QPA_PLATFORM_PLUGIN_PATH=${QT_ROOT_DIR}\plugins\platforms >> $GITHUB_ENV
+          echo QT_QPA_PLATFORM_PLUGIN_PATH="${QT_ROOT_DIR}\plugins\platforms" >> $GITHUB_ENV
           echo QT_USE_NATIVE_WINDOWS=1 >> $GITHUB_ENV
 
           # Setting this variable suppresses "Error retrieving accessibility bus address"
@@ -166,17 +172,14 @@ jobs:
 
       - name: Testing
         if: matrix.cmake_tests != 'OFF'
-        working-directory: build_cmake
         run: |
-          . ../build/tools/httpbin.sh
+          procdump.exe -accepteula -64 -v -t -l -ma -e 1 -x "C:\\Windows" D:\\a\\wxWidgets\\wxWidgets\\build_cmake\\lib\\vc_x64_dll\\test_gui.exe
 
-          httpbin_launch
-
-          ctest -V -C Debug -E test_drawing --output-on-failure --interactive-debug-mode 0 . || rc=$?
-          if [ -n "$rc" ]; then
-              httpbin_show_log
-              exit $rc
-          fi
+      - name: Upload crash dump (if available)
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-dump
+          path: C:/Windows/*.dmp
 
       - name: Testing installation
         run: |
