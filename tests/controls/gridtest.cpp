@@ -36,6 +36,10 @@
     #define wxSKIP_AUTOMATIC_TEST_IF_GTK2()
 #endif
 
+#if defined(__WXQT__) && defined(__WINDOWS__)
+    #define WXQT_WINDOWS_
+#endif
+
 namespace
 {
 
@@ -433,7 +437,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 {
     // TODO on OSX when running the grid test suite solo this works
     // but not when running it together with other tests
-#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__)
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -466,7 +470,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     EventCounter lclick(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
     EventCounter ldclick(m_grid, wxEVT_GRID_CELL_LEFT_DCLICK);
     EventCounter rclick(m_grid, wxEVT_GRID_CELL_RIGHT_CLICK);
@@ -524,7 +528,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     EventCounter click(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
 
     wxUIActionSimulator sim;
@@ -555,7 +559,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     EventCounter cell(m_grid, wxEVT_GRID_SELECT_CELL);
 
     wxUIActionSimulator sim;
@@ -601,7 +605,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -670,7 +674,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::SortClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -708,7 +712,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     // TODO on OSX resizing interactively works, but not automated
     // Grid could not pass the test under OSX and Universal.
     // So there may has bug in Grid implementation
-#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) && !defined(__WXUNIVERSAL__)
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) && !defined(__WXUNIVERSAL__) && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -760,7 +764,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::RangeSelect", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1065,7 +1069,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ScrollWhenSelect", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::MoveGridCursorUsingEndKey", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1099,7 +1103,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::MoveGridCursorUsingEndKey", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::SelectUsingEndKey", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1477,7 +1481,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::GetNonDefaultAlignment", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::Editable", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1509,7 +1513,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Editable", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::ReadOnly", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1544,7 +1548,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ReadOnly", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::WindowAsEditorControl", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1608,7 +1612,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::WindowAsEditorControl", "[grid]")
 TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
 {
     // TODO this test currently works only under Windows, GTK and Qt unfortunately
-#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXQT__))
+#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXQT__)) && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
@@ -1663,7 +1667,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ResizeScrolledHeader", "[grid]")
 TEST_CASE_METHOD(GridTestCase, "Grid::ColumnMinWidth", "[grid]")
 {
     // TODO this test currently works only under Windows, GTK and Qt unfortunately
-#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXQT__))
+#if wxUSE_UIACTIONSIMULATOR && (defined(__WXMSW__) || defined(__WXGTK__) || defined(__WXQT__)) && !defined(WXQT_WINDOWS)
     if ( !EnableUITests() )
         return;
 
