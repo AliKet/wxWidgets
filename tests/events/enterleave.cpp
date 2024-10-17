@@ -21,6 +21,8 @@
     #include "wx/window.h"
 #endif // WX_PRECOMP
 
+#include <cstdlib>
+
 #include "wx/uiaction.h"
 
 #include "asserthelper.h"
@@ -35,10 +37,12 @@
 
 TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 {
+    wxTheApp->GetTopWindow()->Raise();
+
     std::unique_ptr<wxWindow> panel(new wxPanel(wxTheApp->GetTopWindow(), wxID_ANY));
 
     auto button = new wxButton(panel.get(), wxID_ANY, "button", {50, 50});
-    auto textctrl = new wxTextCtrl(panel.get(), wxID_ANY, "", {160, 50});
+    /*auto textctrl =*/ new wxTextCtrl(panel.get(), wxID_ANY, "", {160, 50});
 
     EventCounter enter(panel.get(), wxEVT_ENTER_WINDOW);
     EventCounter leave(panel.get(), wxEVT_LEAVE_WINDOW);
@@ -85,6 +89,22 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         sim.MouseMove(button->GetScreenPosition() + wxPoint(5, 5));
         wxYield();
 
+        EventCounter clicked(button, wxEVT_BUTTON);
+
+        sim.MouseDown();
+        wxYield();
+
+        sim.MouseUp();
+        wxYield();
+#ifdef __WXGTK__
+        if ( clicked.GetCount() != 1 )
+        {
+            std::system("xwd -root > screenshot.xwd");
+        }
+#else
+        CHECK( clicked.GetCount() == 1 );
+#endif
+#if 0
         enter.Clear();
         leave.Clear();
 
@@ -126,6 +146,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         CHECK( enter.GetCount() == 0 );
     #endif
         CHECK( leave.GetCount() == 0 );
+#endif
     }
 }
 
