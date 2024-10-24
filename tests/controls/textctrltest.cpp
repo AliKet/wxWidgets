@@ -663,11 +663,13 @@ void TextCtrlTestCase::LogTextCtrl()
 
 void TextCtrlTestCase::LongText()
 {
-    // This test is only possible under MSW as in the other ports
+    // This test is only possible under wxMSW and wxQt as in the other ports
     // SetMaxLength() can't be used with multi line text controls.
-#ifdef __WXMSW__
+#if defined(__WXMSW__) || defined(__WXQT__)
     delete m_text;
     CreateText(wxTE_MULTILINE|wxTE_DONTWRAP);
+
+    EventCounter maxlen(m_text, wxEVT_TEXT_MAXLEN);
 
     const int numLines = 1000;
     const int lenPattern = 100;
@@ -680,6 +682,45 @@ void TextCtrlTestCase::LongText()
         linePattern[i] = wxChar('0' + i % 10);
     }
     linePattern[WXSIZEOF(linePattern) - 1] = wxChar('\0');
+
+#if wxUSE_UIACTIONSIMULATOR
+    {
+        m_text->SetMaxLength(250); // Set initial maximum length
+        m_text->SetFocus();
+        wxYield();
+
+        m_text->AppendText(wxString::Format("%s\n", linePattern));
+        m_text->SelectAll();
+        m_text->Copy();
+
+        m_text->SetInsertionPointEnd();
+
+        wxUIActionSimulator sim;
+
+        sim.Char('v', wxMOD_CONTROL);
+        wxYield();
+
+        CPPUNIT_ASSERT_EQUAL(0, maxlen.GetCount());
+
+        sim.Char('v', wxMOD_CONTROL);
+        wxYield();
+        CPPUNIT_ASSERT_EQUAL(1, maxlen.GetCount());
+        maxlen.Clear();
+
+        sim.Text("g");
+        wxYield();
+
+        CPPUNIT_ASSERT_EQUAL(1, maxlen.GetCount());
+        maxlen.Clear();
+
+        CPPUNIT_ASSERT_EQUAL( m_text->GetNumberOfLines(), 3);
+
+        const int thirdLineLength = m_text->GetLineText(2).length();
+        CPPUNIT_ASSERT( (thirdLineLength >= 46 && thirdLineLength <= 48) );
+
+        m_text->Clear();
+    }
+#endif // wxUSE_UIACTIONSIMULATOR
 
     // Fill the control.
     m_text->SetMaxLength(15000);
