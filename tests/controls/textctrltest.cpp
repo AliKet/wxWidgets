@@ -28,9 +28,7 @@
     #include "wx/dataobj.h"
 #endif // wxUSE_CLIPBOARD
 
-#if defined(__WXGTK__) || defined(__WXQT__)
-    #include "waitfor.h"
-#endif
+#include "waitfor.h"
 
 #ifdef __WXQT__
 #include <QtGlobal>
@@ -280,7 +278,6 @@ void TextCtrlTestCase::MaxLength()
 
     if ( ms_style == wxTE_MULTILINE )
     {
-#if defined(__WXMSW__) || defined(__WXQT__)
         delete m_text;
         CreateText(wxTE_DONTWRAP | wxTE_RICH);
         EventCounter maxlen(m_text, wxEVT_TEXT_MAXLEN);
@@ -344,7 +341,9 @@ void TextCtrlTestCase::MaxLength()
         m_text->Paste(); // Only the first six characters can actually be pasted.
         WaitFor("wxTextCtrl update", [&]() { return maxlen.GetCount() != 0; });
         const auto line = m_text->GetLineText(0);
-        CPPUNIT_ASSERT( (line[15] == '0' && line[20] == '5' && line[21] == '1') );
+        CPPUNIT_ASSERT( (line[15].GetValue() == '0' &&
+                         line[20].GetValue() == '5' &&
+                         line[21].GetValue() == '1') );
         CPPUNIT_ASSERT_EQUAL(1, maxlen.GetCount());
         maxlen.Clear();
 
@@ -353,7 +352,6 @@ void TextCtrlTestCase::MaxLength()
         m_text->AppendText(wxString::Format("\n%s", linePattern));
         CPPUNIT_ASSERT_EQUAL(4, m_text->GetNumberOfLines());
         CPPUNIT_ASSERT_EQUAL(0, maxlen.GetCount());
-#endif // __WXMSW__ || __WXQT__
     }
     else // !wxTE_MULTILINE
     {
