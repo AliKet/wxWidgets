@@ -28,9 +28,7 @@
     #include "wx/dataobj.h"
 #endif // wxUSE_CLIPBOARD
 
-#if defined(__WXGTK__) || defined(__WXQT__)
-    #include "waitfor.h"
-#endif
+#include "waitfor.h"
 
 #ifdef __WXQT__
 #include <QtGlobal>
@@ -344,7 +342,9 @@ void TextCtrlTestCase::MaxLength()
         m_text->Paste(); // Only the first six characters can actually be pasted.
         WaitFor("wxTextCtrl update", [&]() { return maxlen.GetCount() != 0; });
         const auto line = m_text->GetLineText(0);
-        CPPUNIT_ASSERT( (line[15] == '0' && line[20] == '5' && line[21] == '1') );
+        CPPUNIT_ASSERT( (line[15].GetValue() == '0' &&
+                         line[20].GetValue() == '5' &&
+                         line[21].GetValue() == '1') );
         CPPUNIT_ASSERT_EQUAL(1, maxlen.GetCount());
         maxlen.Clear();
 

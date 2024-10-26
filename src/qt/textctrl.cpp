@@ -257,7 +257,19 @@ public:
 
     virtual void Copy() override { m_edit->copy(); }
     virtual void Cut() override  { m_edit->cut(); }
-    virtual void Paste() override  { m_edit->paste(); }
+    virtual void Paste() override
+    {
+        auto qtEdit = static_cast<wxQtTextEdit*>(m_edit);
+        if ( qtEdit->GetMaxLength() > 0 )
+        {
+            QKeyEvent event(QEvent::KeyPress, Qt::Key_V, Qt::ControlModifier);
+            QApplication::sendEvent(qtEdit, &event);
+        }
+        else
+        {
+            m_edit->paste();
+        }
+    }
 
     virtual void Undo() override  { m_edit->undo(); }
     virtual void Redo() override  { m_edit->redo(); }
