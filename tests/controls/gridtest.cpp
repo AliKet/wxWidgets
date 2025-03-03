@@ -421,11 +421,8 @@ GridTestCase::~GridTestCase()
     //
     // Of course, the right thing to do would be to understand why does it
     // still have capture when the grid is destroyed sometimes.
-    wxWindow* const win = wxWindow::GetCapture();
-    if ( win )
-        win->ReleaseMouse();
-
-    wxDELETE(m_grid);
+    DeleteTestWindow(m_grid);
+    m_grid = nullptr;
     delete m_tempGrid;
 }
 
@@ -433,7 +430,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 {
     // TODO on OSX when running the grid test suite solo this works
     // but not when running it together with other tests
-#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__)
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) 
     if ( !EnableUITests() )
         return;
 
@@ -466,7 +463,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter lclick(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
     EventCounter ldclick(m_grid, wxEVT_GRID_CELL_LEFT_DCLICK);
     EventCounter rclick(m_grid, wxEVT_GRID_CELL_RIGHT_CLICK);
@@ -524,7 +521,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter click(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
 
     wxUIActionSimulator sim;
@@ -555,7 +552,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter cell(m_grid, wxEVT_GRID_SELECT_CELL);
 
     wxUIActionSimulator sim;
