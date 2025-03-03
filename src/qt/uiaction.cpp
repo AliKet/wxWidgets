@@ -155,11 +155,12 @@ static bool SimulateMouseButton( MouseAction mouseAction,
         return false;
 
     const QPoint pos = widget->mapFromGlobal(mousePosition);
-
     // Notice that windowHandle() returns a valid handle for native widgets only.
     widget->windowHandle() != nullptr ?
         mouseEvent( mouseAction, widget->windowHandle(), mouseButton, modifiers, pos ) :
         mouseEvent( mouseAction, widget, mouseButton, modifiers, pos );
+    
+    mouseEvent( mouseAction, widget->windowHandle(), mouseButton, modifiers, pos );
 
     // If we found a widget then we successfully simulated an event:
 
