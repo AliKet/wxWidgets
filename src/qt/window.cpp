@@ -359,6 +359,12 @@ wxWindowQt::~wxWindowQt()
 
     SendDestroyEvent();
 
+    // Avoid processing pending events which quite often would lead to crashes after this.
+    QCoreApplication::removePostedEvents(m_qtWindow);
+
+    // Block signals because the handlers access members of a derived class.
+    m_qtWindow->blockSignals(true);
+
     QtStoreWindowPointer( GetHandle(), nullptr );
 
 #if wxUSE_DRAG_AND_DROP
@@ -1636,6 +1642,9 @@ bool wxWindowQt::QtHandleKeyEvent ( QWidget *WXUNUSED( handler ), QKeyEvent *eve
 
 bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
 {
+    if ( GetHandle() != handler )
+        return false;
+
     // Convert event type
     wxEventType wxType = 0;
     switch ( event->type() )
@@ -1800,6 +1809,9 @@ bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
 
 bool wxWindowQt::QtHandleEnterEvent ( QWidget *handler, QEvent *event )
 {
+    if ( GetHandle() != handler )
+        return false;
+
     static QWidget* s_handlerParent = nullptr;
 
     const bool isEnterEvent = event->type() == QEvent::Enter;
