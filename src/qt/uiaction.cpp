@@ -155,11 +155,16 @@ static bool SimulateMouseButton( MouseAction mouseAction,
         return false;
 
     const QPoint pos = widget->mapFromGlobal(mousePosition);
-
+#if 0
     // Notice that windowHandle() returns a valid handle for native widgets only.
     widget->windowHandle() != nullptr ?
         mouseEvent( mouseAction, widget->windowHandle(), mouseButton, modifiers, pos ) :
         mouseEvent( mouseAction, widget, mouseButton, modifiers, pos );
+#endif
+    if ( !widget->windowHandle() )
+        return false;
+    
+    mouseEvent( mouseAction, widget->windowHandle(), mouseButton, modifiers, pos );
 
     // If we found a widget then we successfully simulated an event:
 
@@ -170,7 +175,7 @@ static bool SimulateKeyboardKey( KeyAction keyAction, Key key, int modifiers )
 {
     QWidget *widget = QApplication::focusWidget();
 
-    if ( !widget )
+    if ( !widget || !widget->windowHandle() )
         return false;
 
     // I don't know if this is a bug in QTest or not, but simulating Shift+Char
