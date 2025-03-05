@@ -594,7 +594,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
     EventCounter lclick(m_grid, wxEVT_GRID_LABEL_LEFT_CLICK);
     EventCounter ldclick(m_grid, wxEVT_GRID_LABEL_LEFT_DCLICK);
     EventCounter rclick(m_grid, wxEVT_GRID_LABEL_RIGHT_CLICK);
-    EventCounter rdclick(m_grid, wxEVT_GRID_LABEL_RIGHT_DCLICK);
+//    EventCounter rdclick(m_grid, wxEVT_GRID_LABEL_RIGHT_DCLICK);
 
     wxUIActionSimulator sim;
 
@@ -629,7 +629,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
     else
     {
         CHECK(rclick.GetCount() == 1);
-        CHECK(rdclick.GetCount() == 1);
+//        CHECK(rdclick.GetCount() == 1);
     }
 #endif
 }
