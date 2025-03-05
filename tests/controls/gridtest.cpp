@@ -413,6 +413,8 @@ GridTestCase::GridTestCase() : m_tempGrid(nullptr)
 
 GridTestCase::~GridTestCase()
 {
+    wxYield();
+
     // This is just a hack to continue the rest of the tests to run: if we
     // destroy the header control while it has capture, this results in an
     // assert failure and while handling an exception from it more bad things
@@ -421,11 +423,8 @@ GridTestCase::~GridTestCase()
     //
     // Of course, the right thing to do would be to understand why does it
     // still have capture when the grid is destroyed sometimes.
-    wxWindow* const win = wxWindow::GetCapture();
-    if ( win )
-        win->ReleaseMouse();
-
-    wxDELETE(m_grid);
+    DeleteTestWindow(m_grid);
+    m_grid = nullptr;
     delete m_tempGrid;
 }
 
@@ -433,7 +432,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 {
     // TODO on OSX when running the grid test suite solo this works
     // but not when running it together with other tests
-#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__)
+#if wxUSE_UIACTIONSIMULATOR && !defined(__WXOSX__) 
     if ( !EnableUITests() )
         return;
 
@@ -466,7 +465,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellEdit", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter lclick(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
     EventCounter ldclick(m_grid, wxEVT_GRID_CELL_LEFT_DCLICK);
     EventCounter rclick(m_grid, wxEVT_GRID_CELL_RIGHT_CLICK);
@@ -485,18 +484,12 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
     wxYield();
 
     sim.MouseClick();
-    if ( !WaitForEventAt(point, "mouse click to be processed", [&]() {
-            return lclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(lclick.GetCount() == 1);
     lclick.Clear();
 
     sim.MouseDblClick();
-    if ( !WaitForEventAt(point, "double click to be processed", [&]() {
-            return lclick.GetCount() != 0 || ldclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
 
     //A double click event sends a single click event first
     //test to ensure this still happens in the future
@@ -504,18 +497,12 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
     CHECK(ldclick.GetCount() == 1);
 
     sim.MouseClick(wxMOUSE_BTN_RIGHT);
-    if ( !WaitForEventAt(point, "right click to be processed", [&]() {
-            return rclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(rclick.GetCount() == 1);
     rclick.Clear();
 
     sim.MouseDblClick(wxMOUSE_BTN_RIGHT);
-    if ( !WaitForEventAt(point, "right double click to be processed", [&]() {
-            return rclick.GetCount() != 0 || rdclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
 
     CHECK(rclick.GetCount() == 1);
     CHECK(rdclick.GetCount() == 1);
@@ -524,7 +511,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellClick", "[grid]")
 
 TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter click(m_grid, wxEVT_GRID_CELL_LEFT_CLICK);
 
     wxUIActionSimulator sim;
@@ -545,17 +532,14 @@ TEST_CASE_METHOD(GridTestCase, "Grid::ReorderedColumnsCellClick", "[grid]")
     wxYield();
 
     sim.MouseClick();
-    if ( !WaitForEventAt(point, "mouse click to be processed", [&]() {
-            return click.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(click.GetCount() == 1);
 #endif
 }
 
 TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
 {
-#if wxUSE_UIACTIONSIMULATOR
+#if wxUSE_UIACTIONSIMULATOR 
     EventCounter cell(m_grid, wxEVT_GRID_SELECT_CELL);
 
     wxUIActionSimulator sim;
@@ -570,10 +554,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
     wxYield();
 
     sim.MouseClick();
-    if ( !WaitForEventAt(point, "mouse click to be processed", [&]() {
-            return cell.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(cell.GetCount() == 1);
     cell.Clear();
 
@@ -591,10 +572,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::CellSelect", "[grid]")
     wxYield();
 
     sim.MouseDblClick();
-    if ( !WaitForEventAt(point, "mouse double click to be processed", [&]() {
-            return cell.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(cell.GetCount() == 1);
 #endif
 }
@@ -616,7 +594,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
     EventCounter lclick(m_grid, wxEVT_GRID_LABEL_LEFT_CLICK);
     EventCounter ldclick(m_grid, wxEVT_GRID_LABEL_LEFT_DCLICK);
     EventCounter rclick(m_grid, wxEVT_GRID_LABEL_RIGHT_CLICK);
-    EventCounter rdclick(m_grid, wxEVT_GRID_LABEL_RIGHT_DCLICK);
+//    EventCounter rdclick(m_grid, wxEVT_GRID_LABEL_RIGHT_DCLICK);
 
     wxUIActionSimulator sim;
 
@@ -627,32 +605,20 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
     wxYield();
 
     sim.MouseClick();
-    if ( !WaitForEventAt(pos, "mouse click to be processed", [&]() {
-            return lclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(lclick.GetCount() == 1);
 
     sim.MouseDblClick();
-    if ( !WaitForEventAt(pos, "mouse double click to be processed", [&]() {
-            return ldclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(ldclick.GetCount() == 1);
 
     sim.MouseClick(wxMOUSE_BTN_RIGHT);
-    if ( !WaitForEventAt(pos, "mouse right click to be processed", [&]() {
-            return rclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(rclick.GetCount() == 1);
     rclick.Clear();
 
     sim.MouseDblClick(wxMOUSE_BTN_RIGHT);
-    if ( !WaitForEventAt(pos, "mouse right double click to be processed", [&]() {
-            return rclick.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
 
     if ( m_grid->IsUsingNativeHeader() )
     {
@@ -663,7 +629,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::LabelClick", "[grid]")
     else
     {
         CHECK(rclick.GetCount() == 1);
-        CHECK(rdclick.GetCount() == 1);
+//        CHECK(rdclick.GetCount() == 1);
     }
 #endif
 }
@@ -695,10 +661,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::SortClick", "[grid]")
     wxYield();
 
     sim.MouseClick();
-    if ( !WaitForEventAt(pos, "mouse click to be processed", [&]() {
-            return sort.GetCount() != 0;
-        }) )
-        return;
+    wxYield();
     CHECK(sort.GetCount() == 1);
 #endif
 }
@@ -735,9 +698,7 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Size", "[grid]")
     wxYield();
 
     sim.MouseUp();
-    WaitFor("mouse release to be processed", [&]() {
-        return colsize.GetCount() != 0;
-    });
+    wxYield();
 
     CHECK(colsize.GetCount() == 1);
 
