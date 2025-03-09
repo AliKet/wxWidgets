@@ -19,7 +19,7 @@
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
-#include <QtWidgets/QShortcut>
+#include <QShortcut>
 
 #ifndef WX_PRECOMP
     #include "wx/dcclient.h"
@@ -350,17 +350,14 @@ wxWindowQt::~wxWindowQt()
 {
     if ( !m_qtWindow )
     {
-        wxLogTrace(TRACE_QT_WINDOW, wxT("wxWindow::~wxWindow %s m_qtWindow is null"), GetName());
+        // Pseudo windows don't have a valid m_qtWindow, so just return.
         return;
     }
 
-    // Delete only if the qt widget was created or assigned to this base class
-    wxLogTrace(TRACE_QT_WINDOW, wxT("wxWindow::~wxWindow %s m_qtWindow=%p"), GetName(), m_qtWindow);
+    if ( s_capturedWindow == this )
+        s_capturedWindow = nullptr;
 
-    if ( !IsBeingDeleted() )
-    {
-        SendDestroyEvent();
-    }
+    SendDestroyEvent();
 
     // Avoid processing pending events which quite often would lead to crashes after this.
     QCoreApplication::removePostedEvents(m_qtWindow);
@@ -368,17 +365,13 @@ wxWindowQt::~wxWindowQt()
     // Block signals because the handlers access members of a derived class.
     m_qtWindow->blockSignals(true);
 
-    if ( s_capturedWindow == this )
-        s_capturedWindow = nullptr;
-
-    DestroyChildren(); // This also destroys scrollbars
-
-    if (m_qtWindow)
-        QtStoreWindowPointer( GetHandle(), nullptr );
+    QtStoreWindowPointer( GetHandle(), nullptr );
 
 #if wxUSE_DRAG_AND_DROP
     SetDropTarget(nullptr);
 #endif
+
+    DestroyChildren(); // This also destroys scrollbars
 
     delete m_qtWindow;
 }
@@ -1649,6 +1642,9 @@ bool wxWindowQt::QtHandleKeyEvent ( QWidget *WXUNUSED( handler ), QKeyEvent *eve
 
 bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
 {
+    if ( GetHandle() != handler )
+        return false;
+
     // Convert event type
     wxEventType wxType = 0;
     switch ( event->type() )
@@ -1737,7 +1733,11 @@ bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
 
     // Use screen position as the event might originate from a different
     // Qt window than this one.
+#if QT_VERSION_MAJOR >= 6
+    const wxPoint mousePos = ScreenToClient(wxQtConvertPoint(event->globalPosition().toPoint()));
+#else
     const wxPoint mousePos = ScreenToClient(wxQtConvertPoint(event->globalPos()));
+#endif
 
     wxMouseEvent e( wxType );
     e.SetEventObject(this);
@@ -1809,6 +1809,9 @@ bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
 
 bool wxWindowQt::QtHandleEnterEvent ( QWidget *handler, QEvent *event )
 {
+    if ( GetHandle() != handler )
+        return false;
+
     static QWidget* s_handlerParent = nullptr;
 
     const bool isEnterEvent = event->type() == QEvent::Enter;

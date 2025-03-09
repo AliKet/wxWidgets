@@ -413,6 +413,8 @@ GridTestCase::GridTestCase() : m_tempGrid(nullptr)
 
 GridTestCase::~GridTestCase()
 {
+    m_grid->Hide();
+
     // This is just a hack to continue the rest of the tests to run: if we
     // destroy the header control while it has capture, this results in an
     // assert failure and while handling an exception from it more bad things
@@ -832,8 +834,8 @@ TEST_CASE_METHOD(GridTestCase, "Grid::Cursor", "[grid]")
     m_grid->SetCellValue(0, 1, "more text");
     m_grid->SetCellValue(3, 1, "extra text");
 
-    m_grid->Update();
     m_grid->Refresh();
+    m_grid->Update();
 
     m_grid->MoveCursorLeftBlock(false);
 
