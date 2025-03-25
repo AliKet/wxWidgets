@@ -52,7 +52,7 @@ bool wxApp::Initialize( int& argc_, wxChar** argv_ )
         qtConsumedArgs.push_back(argvA[i]); // We only need shallow copies of the pointers
     }
 
-    m_qtApplication.reset(new QApplication(argcA, argvA));
+    m_qtApplication.reset(new QApplication(argc_, argvA));
 
     if ( m_qtApplication->platformName() == "xcb" )
         m_qtApplication->processEvents(); // Avoids SIGPIPE on X11 when debugging
@@ -61,7 +61,7 @@ bool wxApp::Initialize( int& argc_, wxChar** argv_ )
     {
         // Qt removes command line arguments (from argvA) that it recognizes without deleting them,
         // so we need to free them here ourselves to avoid memory leaks.
-        for ( int i = 0; i < argcA; ++i )
+        for ( int i = 0; i < argc_; ++i )
         {
             qtConsumedArgs.erase(std::remove(qtConsumedArgs.begin(), qtConsumedArgs.end(), argvA[i]),
                                  qtConsumedArgs.end());
@@ -72,7 +72,6 @@ bool wxApp::Initialize( int& argc_, wxChar** argv_ )
             free(consumedArg);
         }
 
-        argc_ = argcA;
         argv_[argc_] = nullptr;
 
         this->argc = argc_;
