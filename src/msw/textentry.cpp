@@ -968,7 +968,7 @@ void wxTextEntry::SetMaxLength(unsigned long len)
         len = 0;
     }
 
-    ::SendMessage(GetEditHwnd(), EM_LIMITTEXT, len, 0);
+    ::SendMessage(GetEditHwnd(), EM_SETLIMITTEXT, len, 0);
 }
 
 void wxTextEntry::ForceUpper()
