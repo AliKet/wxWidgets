@@ -432,7 +432,7 @@ void EventPropagationTestCase::ScrollWindowWithHandler()
 
 // Create a menu bar with a single menu containing wxID_APPLY menu item and
 // attach it to the specified frame.
-wxMenu* CreateTestMenu(wxFrameBase* frame)
+wxMenu* CreateTestMenu(wxFrame* frame)
 {
     wxMenu* const menu = new wxMenu;
     menu->Append(wxID_APPLY);

@@ -731,7 +731,14 @@ QWidget *wxWindowQt::QtGetClientWidget() const
 {
     auto frame = wxDynamicCast(this, wxFrame);
     if ( frame )
-        return frame->GetQMainWindow()->centralWidget();
+    {
+        // wxMDIChildFrame (although it is a wxFrame) is just a simple widget
+        // and GetQMainWindow() always returns nullptr for it.
+        if ( auto qtMainWindow = frame->GetQMainWindow() )
+        {
+            return qtMainWindow->centralWidget();
+        }
+    }
 
     return wxQtGetDrawingWidget(m_qtContainer, GetHandle());
 }

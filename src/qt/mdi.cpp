@@ -237,6 +237,11 @@ bool wxMDIChildFrame::Create(wxMDIParentFrame *parent,
     return true;
 }
 
+void wxMDIChildFrame::SetWindowStyleFlag(long style)
+{
+    wxWindow::SetWindowStyleFlag(style);
+}
+
 void wxMDIChildFrame::Activate()
 {
     auto qtMdiArea = static_cast<QMdiArea*>(GetParent()->GetHandle());

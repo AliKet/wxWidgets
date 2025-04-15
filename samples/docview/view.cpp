@@ -46,7 +46,7 @@ bool DrawingView::OnCreate(wxDocument *doc, long flags)
     if ( app.GetMode() != MyApp::Mode_Single )
     {
         // create a new window and canvas inside it
-        auto frame = app.CreateChildFrame(this, true);
+        wxFrame* frame = app.CreateChildFrame(this, true);
         wxASSERT(frame == GetFrame());
         m_canvas = new MyCanvas(this);
         frame->Show();
@@ -154,7 +154,7 @@ bool TextEditView::OnCreate(wxDocument *doc, long flags)
     if ( !wxView::OnCreate(doc, flags) )
         return false;
 
-    auto frame = wxGetApp().CreateChildFrame(this, false);
+    wxFrame* frame = wxGetApp().CreateChildFrame(this, false);
     wxASSERT(frame == GetFrame());
     m_text = new wxTextCtrl(frame, wxID_ANY, "",
                             wxDefaultPosition, wxDefaultSize,
@@ -311,7 +311,7 @@ bool ImageView::OnCreate(wxDocument* doc, long flags)
     if ( !wxView::OnCreate(doc, flags) )
         return false;
 
-    auto frame = wxGetApp().CreateChildFrame(this, false);
+    wxFrame* frame = wxGetApp().CreateChildFrame(this, false);
     wxASSERT(frame == GetFrame());
     m_canvas = new ImageCanvas(this);
     frame->Show();

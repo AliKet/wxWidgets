@@ -338,7 +338,7 @@ wxMenu *MyApp::CreateDrawingEditMenu()
     return menu;
 }
 
-void MyApp::CreateMenuBarForFrame(wxFrameBase *frame, wxMenu *file, wxMenu *edit)
+void MyApp::CreateMenuBarForFrame(wxFrame *frame, wxMenu *file, wxMenu *edit)
 {
     wxMenuBar *menubar = new wxMenuBar;
 
@@ -354,10 +354,10 @@ void MyApp::CreateMenuBarForFrame(wxFrameBase *frame, wxMenu *file, wxMenu *edit
     frame->SetMenuBar(menubar);
 }
 
-wxFrameBase *MyApp::CreateChildFrame(wxView *view, bool isCanvas)
+wxFrame *MyApp::CreateChildFrame(wxView *view, bool isCanvas)
 {
     // create a child frame of appropriate class for the current mode
-    wxFrameBase *subframe = nullptr;
+    wxFrame *subframe = nullptr;
     wxDocument *doc = view->GetDocument();
     switch ( GetMode() )
 #if wxUSE_MDI_ARCHITECTURE

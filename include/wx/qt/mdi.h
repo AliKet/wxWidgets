@@ -76,9 +76,33 @@ public:
 
     virtual void SetMenuBar(wxMenuBar* menubar) override;
 
+    // wxMDIChildFrame doesn't have toolbar nor statusbar
+    // --------------------------------------------------
+
+#if wxUSE_STATUSBAR
+    virtual void SetStatusBar(wxStatusBar* WXUNUSED(statusBar)) override {}
+#endif // wxUSE_STATUSBAR
+
+#if wxUSE_TOOLBAR
+    virtual void SetToolBar(wxToolBar* WXUNUSED(toolbar)) override {}
+#endif // wxUSE_TOOLBAR
+
+    virtual void SetWindowStyleFlag( long style ) override;
+
     // This function is responsible of attaching this frame's menubar to m_mdiParent
     // when it becomes active and also restoring the m_mdiParent's menubar otherwise.
     void InternalSetMenuBar();
+
+protected:
+    virtual wxPoint GetClientAreaOrigin() const override
+    {
+        return wxWindow::GetClientAreaOrigin();
+    }
+
+    virtual QWidget* QtGetParentWidget() const override
+    {
+        return GetHandle();
+    }
 
 private:
     void UpdateWindowMenu(wxMenuBar* attachedMenuBar, wxMenuBar* detachedMenuBar);
