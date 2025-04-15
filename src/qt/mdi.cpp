@@ -11,6 +11,7 @@
 #if wxUSE_MDI
 
 #include "wx/mdi.h"
+#include "wx/stockitem.h"
 #include "wx/qt/private/utils.h"
 #include "wx/qt/private/converter.h"
 #include "wx/qt/private/winevent.h"
@@ -48,6 +49,10 @@ wxMDIParentFrame::wxMDIParentFrame(wxWindow *parent,
 
 wxMDIParentFrame::~wxMDIParentFrame()
 {
+    // m_windowMenu will be deleted by this frame's menubar, so
+    // avoid a double deletion in the base class dtor.
+    m_windowMenu = nullptr;
+
     delete m_clientWindow;
 }
 
@@ -70,6 +75,26 @@ bool wxMDIParentFrame::Create(wxWindow *parent,
     // Get rid of the central widget set in wxFrame and set our own widget.
     GetQMainWindow()->setCentralWidget(client->GetHandle());
 
+    // this style can be used to prevent a window from having the standard MDI
+    // "Window" menu
+    if ( !(style & wxFRAME_NO_WINDOW_MENU) )
+    {
+        // normal case: we have the window menu, so construct it
+        m_windowMenu = new wxMenu;
+
+        // Qt offers only "Tile" without specifying any direction, so just
+        // reuse one of the predifined ids.
+        const int wxID_MDI_WINDOW_TILE = wxID_MDI_WINDOW_TILE_HORZ;
+
+        m_windowMenu->Append(wxID_MDI_WINDOW_CASCADE, _("&Cascade"));
+        m_windowMenu->Append(wxID_MDI_WINDOW_TILE, _("&Tile"));
+        m_windowMenu->AppendSeparator();
+        m_windowMenu->Append(wxID_MDI_WINDOW_NEXT, _("&Next"));
+        m_windowMenu->Append(wxID_MDI_WINDOW_PREV, _("&Previous"));
+    }
+
+    Bind(wxEVT_MENU, &wxMDIParentFrame::OnMDICommand, this, wxID_MDI_WINDOW_FIRST, wxID_MDI_WINDOW_LAST);
+
     return true;
 }
 
@@ -91,6 +116,34 @@ void wxMDIParentFrame::ActivateNext()
 void wxMDIParentFrame::ActivatePrevious()
 {
     static_cast<QMdiArea*>(m_clientWindow->GetHandle())->activatePreviousSubWindow();
+}
+
+void wxMDIParentFrame::OnMDICommand(wxCommandEvent& event)
+{
+    switch (event.GetId())
+    {
+    case wxID_MDI_WINDOW_CASCADE:
+        Cascade();
+        break;
+
+    case wxID_MDI_WINDOW_TILE_HORZ:
+        wxFALLTHROUGH;
+    case wxID_MDI_WINDOW_TILE_VERT:
+        Tile();
+        break;
+
+    case wxID_MDI_WINDOW_NEXT:
+        ActivateNext();
+        break;
+
+    case wxID_MDI_WINDOW_PREV:
+        ActivatePrevious();
+        break;
+
+    default:
+        wxFAIL_MSG("unknown MDI command");
+        break;
+    }
 }
 
 //##############################################################################
@@ -209,9 +262,41 @@ void wxMDIChildFrame::InternalSetMenuBar()
     {
         m_mdiParent->SetMenuBar(m_menuBar);
 
+        UpdateWindowMenu(m_menuBar, oldMenuBar);
+
         m_menuBar->Show(); // Show the attached menubar
         m_menuBar = oldMenuBar;
         m_menuBar->Hide(); // Hide the detached menubar
+    }
+}
+
+void wxMDIChildFrame::UpdateWindowMenu(wxMenuBar* attachedMenuBar,
+                                       wxMenuBar* detachedMenuBar)
+{
+    auto windowMenu = m_mdiParent->GetWindowMenu();
+
+    if ( !windowMenu )
+        return;
+
+    const wxString windowMenuTitle = _("&Window");
+
+    if ( detachedMenuBar )
+    {
+        auto pos = detachedMenuBar->FindMenu(windowMenuTitle);
+        if ( pos != wxNOT_FOUND )
+        {
+            detachedMenuBar->Remove(pos);
+        }
+    }
+
+    if ( attachedMenuBar )
+    {
+
+        auto pos = attachedMenuBar->FindMenu(wxGetStockLabel(wxID_HELP));
+        if ( pos != wxNOT_FOUND )
+        {
+            attachedMenuBar->Insert(pos, windowMenu, windowMenuTitle);
+        }
     }
 }
 

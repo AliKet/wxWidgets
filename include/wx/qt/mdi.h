@@ -42,6 +42,8 @@ public:
     virtual void ActivatePrevious() override;
 
 private:
+    void OnMDICommand(wxCommandEvent& event);
+
     wxDECLARE_DYNAMIC_CLASS(wxMDIParentFrame);
 };
 
@@ -79,6 +81,7 @@ public:
     void InternalSetMenuBar();
 
 private:
+    void UpdateWindowMenu(wxMenuBar* attachedMenuBar, wxMenuBar* detachedMenuBar);
 
     wxMenuBar* m_menuBar = nullptr;
 
