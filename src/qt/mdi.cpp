@@ -19,16 +19,6 @@
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QMainWindow>
 
-// Main MDI window helper
-
-class wxQtMDIParentFrame : public wxQtEventSignalHandler< QMainWindow, wxMDIParentFrame >
-{
-public:
-    wxQtMDIParentFrame( wxWindow *parent, wxMDIParentFrame *handler );
-
-private:
-};
-
 // Central widget helper (container to show scroll bars and receive events):
 
 class wxQtMdiArea : public wxQtEventSignalHandler< QMdiArea, wxMDIClientWindow >
@@ -47,7 +37,7 @@ wxMDIParentFrame::wxMDIParentFrame(wxWindow *parent,
                  long style,
                  const wxString& name)
 {
-    (void)Create(parent, id, title, pos, size, style, name);
+    Create(parent, id, title, pos, size, style, name);
 }
 
 bool wxMDIParentFrame::Create(wxWindow *parent,
@@ -58,19 +48,16 @@ bool wxMDIParentFrame::Create(wxWindow *parent,
             long style,
             const wxString& name)
 {
-    m_qtWindow = new wxQtMDIParentFrame( parent, this );
-
-    if (!wxFrameBase::Create( parent, id, title, pos, size, style, name ))
+    if ( !wxFrame::Create(parent, id, title, pos, size, style, name) )
         return false;
 
-    wxMDIClientWindow *client = OnCreateClient();
+    wxMDIClientWindow* client = OnCreateClient();
     m_clientWindow = client;
     if ( !m_clientWindow->CreateClient(this, GetWindowStyleFlag()) )
         return false;
 
-    GetQMainWindow()->setCentralWidget( client->GetHandle() );
-
-    PostCreation();
+    // Get rid of the central widget set in wxFrame and set our own widget.
+    GetQMainWindow()->setCentralWidget(client->GetHandle());
 
     return true;
 }
@@ -141,11 +128,6 @@ bool wxMDIClientWindow::CreateClient(wxMDIParentFrame *parent, long WXUNUSED(sty
 }
 
 // Helper implementation:
-
-wxQtMDIParentFrame::wxQtMDIParentFrame( wxWindow *parent, wxMDIParentFrame *handler )
-    : wxQtEventSignalHandler< QMainWindow, wxMDIParentFrame >( parent, handler )
-{
-}
 
 wxQtMdiArea::wxQtMdiArea(wxWindow *parent, wxMDIClientWindow *handler )
     : wxQtEventSignalHandler< QMdiArea, wxMDIClientWindow >( parent, handler )
