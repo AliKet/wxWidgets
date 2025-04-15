@@ -51,7 +51,7 @@ public:
 
     // our specific methods
     Mode GetMode() const { return m_mode; }
-    wxFrame *CreateChildFrame(wxView *view, bool isCanvas);
+    wxFrameBase *CreateChildFrame(wxView *view, bool isCanvas);
 
     // these accessors should only be called in single document mode, otherwise
     // the pointers are null and an assert is triggered
@@ -70,7 +70,7 @@ private:
     // create and associate with the given frame the menu bar containing the
     // given file and edit (possibly null) menus as well as the standard help
     // one
-    void CreateMenuBarForFrame(wxFrame *frame, wxMenu *file, wxMenu *edit);
+    void CreateMenuBarForFrame(wxFrameBase *frame, wxMenu *file, wxMenu *edit);
 
 
     // force close all windows

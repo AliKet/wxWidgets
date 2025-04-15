@@ -162,7 +162,7 @@ public:
     virtual bool OnClose(bool deleteWindow) override;
 
 private:
-    wxFrame *m_frame;
+    wxFrameBase *m_frame;
 };
 
 #endif // _WX_SAMPLES_DOCVIEW_VIEW_H_

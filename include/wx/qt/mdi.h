@@ -41,7 +41,7 @@ private:
     wxDECLARE_DYNAMIC_CLASS(wxMDIParentFrame);
 };
 
-
+class QMdiSubWindow;
 
 class WXDLLIMPEXP_CORE wxMDIChildFrame : public wxMDIChildFrameBase
 {
@@ -65,6 +65,10 @@ public:
                 const wxString& name = wxASCII_STR(wxFrameNameStr));
 
     virtual void Activate() override;
+
+private:
+
+    QMdiSubWindow* m_qtSubWindow = nullptr;
 
     wxDECLARE_DYNAMIC_CLASS(wxMDIChildFrame);
 };

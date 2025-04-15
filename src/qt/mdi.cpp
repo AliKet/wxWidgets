@@ -16,6 +16,7 @@
 #include "wx/qt/private/winevent.h"
 
 #include <QtWidgets/QMdiArea>
+#include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QMainWindow>
 
 // Main MDI window helper
@@ -84,7 +85,7 @@ void wxMDIParentFrame::ActivatePrevious()
 
 //##############################################################################
 
-wxIMPLEMENT_DYNAMIC_CLASS(wxMDIChildFrame,wxMDIChildFrameBase)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMDIChildFrame, wxMDIChildFrameBase)
 
 wxMDIChildFrame::wxMDIChildFrame(wxMDIParentFrame *parent,
                 wxWindowID id,
@@ -106,15 +107,21 @@ bool wxMDIChildFrame::Create(wxMDIParentFrame *parent,
             const wxString& name)
 {
     m_mdiParent = parent;
-    bool ok = wxFrame::Create(parent->GetClientWindow(), id,
-                              title,
-                               pos, size, style, name);
-    if (ok)
+
+    if ( !wxFrameBase::Create(parent->GetClientWindow(), id,
+                              title, pos, size, style, name) )
+        return false;
+
+    // Add the window to the internal MDI client area:
+    auto qtMdiArea = static_cast<QMdiArea*>(GetParent()->GetHandle());
+    m_qtSubWindow  = qtMdiArea->addSubWindow(GetHandle());
+
+    if ( size != wxDefaultSize )
     {
-        // Add the window to the internal MDI client area:
-        static_cast<QMdiArea*>(parent->GetQMainWindow()->centralWidget())->addSubWindow(GetHandle());
+        m_qtSubWindow->setMinimumSize(wxQtConvertSize(size));
     }
-    return ok;
+
+    return true;
 }
 
 void wxMDIChildFrame::Activate()

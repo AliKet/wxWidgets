@@ -142,8 +142,13 @@ protected:
 // ----------------------------------------------------------------------------
 // wxMDIChildFrameBase: child frame managed by wxMDIParentFrame
 // ----------------------------------------------------------------------------
+#ifdef __WXQT__
+using wxMDIChildFrameBaseBase = wxFrameBase;
+#else
+using wxMDIChildFrameBaseBase = wxFrame;
+#endif
 
-class WXDLLIMPEXP_CORE wxMDIChildFrameBase : public wxFrame
+class WXDLLIMPEXP_CORE wxMDIChildFrameBase : public wxMDIChildFrameBaseBase
 {
 public:
     wxMDIChildFrameBase() { m_mdiParent = nullptr; }
@@ -214,6 +219,11 @@ protected:
 class WXDLLIMPEXP_CORE wxTDIChildFrame : public wxMDIChildFrameBase
 {
 public:
+    // title is used as the tab label
+    virtual wxString GetTitle() const override { return m_title; }
+    virtual void SetTitle(const wxString& title) override = 0;
+
+#ifndef __WXQT__
     // override wxFrame methods for this non top-level window
 
 #if wxUSE_STATUSBAR
@@ -250,10 +260,6 @@ public:
 
     // no icon
     virtual void SetIcons(const wxIconBundle& WXUNUSED(icons)) override { }
-
-    // title is used as the tab label
-    virtual wxString GetTitle() const override { return m_title; }
-    virtual void SetTitle(const wxString& title) override = 0;
 
     // no maximize etc
     virtual void Maximize(bool WXUNUSED(maximize) = true) override { }
@@ -330,6 +336,7 @@ protected:
     virtual void DoSetSizeHints(int WXUNUSED(minW), int WXUNUSED(minH),
                                 int WXUNUSED(maxW), int WXUNUSED(maxH),
                                 int WXUNUSED(incW), int WXUNUSED(incH)) override { }
+#endif // !__WXQT__
 
     wxString m_title;
 };
