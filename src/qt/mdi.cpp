@@ -73,12 +73,24 @@ bool wxMDIParentFrame::Create(wxWindow *parent,
     return true;
 }
 
+void wxMDIParentFrame::Cascade()
+{
+    static_cast<QMdiArea*>(m_clientWindow->GetHandle())->cascadeSubWindows();
+}
+
+void wxMDIParentFrame::Tile(wxOrientation WXUNUSED(orient))
+{
+    static_cast<QMdiArea*>(m_clientWindow->GetHandle())->tileSubWindows();
+}
+
 void wxMDIParentFrame::ActivateNext()
 {
+    static_cast<QMdiArea*>(m_clientWindow->GetHandle())->activateNextSubWindow();
 }
 
 void wxMDIParentFrame::ActivatePrevious()
 {
+    static_cast<QMdiArea*>(m_clientWindow->GetHandle())->activatePreviousSubWindow();
 }
 
 //##############################################################################
@@ -174,6 +186,9 @@ bool wxMDIChildFrame::Create(wxMDIParentFrame *parent,
 
 void wxMDIChildFrame::Activate()
 {
+    auto qtMdiArea = static_cast<QMdiArea*>(GetParent()->GetHandle());
+
+    qtMdiArea->setActiveSubWindow(m_qtSubWindow);
 }
 
 void wxMDIChildFrame::SetMenuBar(wxMenuBar* menuBar)

@@ -36,6 +36,8 @@ public:
 
     static bool IsTDI() { return false; }
 
+    virtual void Cascade() override;
+    virtual void Tile(wxOrientation orient = wxHORIZONTAL) override;
     virtual void ActivateNext() override;
     virtual void ActivatePrevious() override;
 
