@@ -436,6 +436,9 @@ void wxMDIChildFrame::InternalSetMenuBar()
 {
     wxCHECK_RET(m_mdiParent, "Invalid MDI parent window");
 
+    if ( !m_menuBar )
+        return;
+
     auto oldMenuBar = m_mdiParent->GetMenuBar();
 
     if ( m_menuBar != oldMenuBar )
