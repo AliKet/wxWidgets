@@ -296,6 +296,13 @@ public:
 #endif // __WXMSW__
 
 protected:
+#ifdef __WXQT__
+    virtual wxPoint GetClientAreaOrigin() const override
+    {
+        return wxWindow::GetClientAreaOrigin();
+    }
+#endif // __WXQT__
+
     virtual void DoGetSize(int *width, int *height) const override
     {
         wxWindow::DoGetSize(width, height);

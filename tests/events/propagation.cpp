@@ -26,6 +26,10 @@
 #include "wx/scopeguard.h"
 #include "wx/toolbar.h"
 #include "wx/uiaction.h"
+#if wxUSE_AUI
+    #include "wx/aui/framemanager.h"
+    #include "wx/aui/tabmdi.h"
+#endif
 
 #include <memory>
 
@@ -248,6 +252,9 @@ private:
 #endif
 #if wxUSE_DOC_VIEW_ARCHITECTURE
         CPPUNIT_TEST( DocView );
+    #if wxUSE_AUI
+        CPPUNIT_TEST( DocViewAui );
+    #endif
 #endif // wxUSE_DOC_VIEW_ARCHITECTURE
         WXUISIM_TEST( ContextMenuEvent );
         WXUISIM_TEST( PropagationLevel );
@@ -265,6 +272,18 @@ private:
 #endif
 #if wxUSE_DOC_VIEW_ARCHITECTURE
     void DocView();
+    #if wxUSE_AUI
+        void DocViewAui();
+    #endif
+    void DocViewCommon(wxFrame* (*newParent)(wxDocManager *manager,
+                                                wxFrame *parent,
+                                                wxWindowID id,
+                                                const wxString& title),
+                        wxFrame* (*newChild)(wxDocument *doc,
+                                                wxView *view,
+                                                wxFrame *parent,
+                                                wxWindowID id,
+                                                const wxString& title));
 #endif // wxUSE_DOC_VIEW_ARCHITECTURE
 #if wxUSE_UIACTIONSIMULATOR
     void ContextMenuEvent();
@@ -535,29 +554,121 @@ wxIMPLEMENT_DYNAMIC_CLASS(EventTestView, wxView);
 
 void EventPropagationTestCase::DocView()
 {
+    WARN("Line " << __LINE__);
+    DocViewCommon(
+        [](wxDocManager* manager,
+            wxFrame *parent,
+            wxWindowID id,
+            const wxString& title) -> wxFrame*
+        {
+            WARN("Line " << __LINE__);
+            return new wxDocMDIParentFrame(manager, parent, id, title);
+        },
+        [](wxDocument *doc,
+            wxView *view,
+            wxFrame *parent,
+            wxWindowID id,
+            const wxString& title) -> wxFrame*
+        {
+            WARN("Line " << __LINE__);
+            wxDocMDIChildFrame* child = new wxDocMDIChildFrame(doc, view, dynamic_cast<wxDocMDIParentFrame*>(parent), id, title);
+            WARN("Line " << __LINE__);
+            // Ensure that the child that we've just created is the active one.
+            child->Activate();
+            WARN("Line " << __LINE__);
+            return child;
+        }
+    );
+    WARN("Line " << __LINE__);
+}
+
+#if wxUSE_AUI
+void EventPropagationTestCase::DocViewAui()
+{
+    WARN("Line " << __LINE__);
+    DocViewCommon(
+        [](wxDocManager* manager,
+            wxFrame *parent,
+            wxWindowID id,
+            const wxString& title) -> wxFrame*
+        {
+            class AuiParentFrame : public wxDocParentFrameAny<wxAuiMDIParentFrame>
+            {
+            public:
+                AuiParentFrame(wxDocManager* manager,
+                                wxFrame* parent,
+                                wxWindowID id,
+                                const wxString& title) :
+                    wxDocParentFrameAny<wxAuiMDIParentFrame>(manager, parent, id, title),
+                    auiMgr(this)
+                {
+                }
+            private:
+                wxAuiManager auiMgr;
+            };
+            WARN("Line " << __LINE__);
+            return new AuiParentFrame(manager, parent, id, title);
+        },
+        [](wxDocument *doc,
+            wxView *view,
+            wxFrame *parentBase,
+            wxWindowID id,
+            const wxString& title) -> wxFrame*
+        {
+            WARN("Line " << __LINE__);
+            typedef wxDocParentFrameAny<wxAuiMDIParentFrame> ParentType;
+            ParentType* parent = dynamic_cast<ParentType*>(parentBase);
+            wxFrame* child = new wxDocChildFrameAny<wxAuiMDIChildFrame, wxAuiMDIParentFrame>(doc, view, parent, id, title);
+            WARN("Line " << __LINE__);
+            CHECK( parent->GetActiveChild() == child );
+            WARN("Line " << __LINE__);
+            return child;
+        }
+    );
+    WARN("Line " << __LINE__);
+}
+#endif // wxUSE_AUI
+
+void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager *manager,
+                                                                        wxFrame *parent,
+                                                                        wxWindowID id,
+                                                                        const wxString& title),
+                                                wxFrame* (*newChild)(wxDocument *doc,
+                                                                        wxView *view,
+                                                                        wxFrame *parent,
+                                                                        wxWindowID id,
+                                                                        const wxString& title))
+{
+    WARN("Line " << __LINE__);
     // Set up the parent frame and its menu bar.
     wxDocManager docManager;
 
-    std::unique_ptr<wxDocMDIParentFrame>
-        parent(new wxDocMDIParentFrame(&docManager, nullptr, wxID_ANY, "Parent"));
+    WARN("Line " << __LINE__);
+    std::unique_ptr<wxFrame>
+        parent((*newParent)(&docManager, nullptr, wxID_ANY, "Parent"));
 
+    WARN("Line " << __LINE__);
     wxMenu* const menu = CreateTestMenu(parent.get());
 
 
+    WARN("Line " << __LINE__);
     // Set up the event handlers.
     TestEvtSink sinkDM('m');
     docManager.Connect(wxEVT_MENU,
                        wxEventHandler(TestEvtSink::Handle), nullptr, &sinkDM);
 
+    WARN("Line " << __LINE__);
     TestEvtSink sinkParent('p');
     parent->Connect(wxEVT_MENU,
                     wxEventHandler(TestEvtSink::Handle), nullptr, &sinkParent);
 
 
+    WARN("Line " << __LINE__);
     // Check that wxDocManager and wxFrame get the event in order.
     ASSERT_MENU_EVENT_RESULT( menu, "ampA" );
 
 
+    WARN("Line " << __LINE__);
     // The document template must be heap-allocated as wxDocManager owns it.
     wxDocTemplate* const docTemplate = new wxDocTemplate
                                            (
@@ -567,17 +678,17 @@ void EventPropagationTestCase::DocView()
                                             wxCLASSINFO(EventTestView)
                                            );
 
+    WARN("Line " << __LINE__);
     // Now check what happens if we have an active document.
     wxDocument* const doc = docTemplate->CreateDocument("");
     wxView* const view = doc->GetFirstView();
 
-    std::unique_ptr<wxMDIChildFrame>
-        child(new wxDocMDIChildFrame(doc, view, parent.get(), wxID_ANY, "Child"));
+    WARN("Line " << __LINE__);
+    std::unique_ptr<wxFrame>
+        child((*newChild)(doc, view, parent.get(), wxID_ANY, "Child"));
 
+    WARN("Line " << __LINE__);
     wxMenu* const menuChild = CreateTestMenu(child.get());
-
-    // Ensure that the child that we've just created is the active one.
-    child->Activate();
 
     // There are a lot of hacks related to child frame menu bar handling in
     // wxGTK and, in particular, the code in src/gtk/mdi.cpp relies on getting
@@ -591,8 +702,11 @@ void EventPropagationTestCase::DocView()
     child->Show();
     parent->Show();
     child->SetFocus(); // Without this, the test would fail on wxGTK2
+    WARN("Line " << __LINE__);
     YieldForAWhile();
+    WARN("Line " << __LINE__);
 
+    WARN("Line " << __LINE__);
     TestEvtSink sinkDoc('d');
     doc->Connect(wxEVT_MENU,
                  wxEventHandler(TestEvtSink::Handle), nullptr, &sinkDoc);
@@ -608,6 +722,7 @@ void EventPropagationTestCase::DocView()
     // Check that wxDocument, wxView, wxDocManager, child frame and the parent
     // get the event in order.
 #if wxUSE_UIACTIONSIMULATOR
+    WARN("Line " << __LINE__);
     // We use wxUIActionSimulator instead of ASSERT_MENU_EVENT_RESULT because
     // using the latter fails with wxQt on Linux.
     wxUnusedVar(menuChild);
@@ -620,14 +735,20 @@ void EventPropagationTestCase::DocView()
     // never be executed under wxMSW. In other words, the execution would block
     // indefinitely.
     sim.Char('a');
+    WARN("Line " << __LINE__);
     wxYield();
+    WARN("Line " << __LINE__);
 
     CHECK( g_str == "advmcpA" );
+    WARN("Line " << __LINE__);
 #else // !wxUSE_UIACTIONSIMULATOR
+    WARN("Line " << __LINE__);
     ASSERT_MENU_EVENT_RESULT( menuChild, "advmcpA" );
+    WARN("Line " << __LINE__);
 #endif // wxUSE_UIACTIONSIMULATOR
 
 #if wxUSE_TOOLBAR
+    WARN("Line " << __LINE__);
     // Also check that toolbar events get forwarded to the active child.
     wxToolBar* const tb = parent->CreateToolBar(wxTB_NOICONS);
     tb->AddTool(wxID_APPLY, "Apply", wxNullBitmap);
@@ -640,9 +761,9 @@ void EventPropagationTestCase::DocView()
     tb->OnLeftClick(wxID_APPLY, true /* doesn't matter */);
 
     CPPUNIT_ASSERT_EQUAL( "advmcpA", g_str );
+    WARN("Line " << __LINE__);
 #endif // wxUSE_TOOLBAR
 }
-
 #endif // wxUSE_DOC_VIEW_ARCHITECTURE
 
 #if wxUSE_UIACTIONSIMULATOR
