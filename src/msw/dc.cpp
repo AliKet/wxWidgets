@@ -408,17 +408,29 @@ void wxMSWDCImpl::SetClippingHrgn(WXHRGN hrgn)
 {
     wxCHECK_RET( hrgn, wxT("invalid clipping region") );
 
-    // note that we combine the new clipping region with the existing one: this
-    // is compatible with what the other ports do and is the documented
-    // behaviour now (starting with 2.3.3)
-    if ( ::ExtSelectClipRgn(GetHdc(), (HRGN)hrgn, RGN_AND) == ERROR )
+    if ( m_clipping )
     {
-        wxLogLastError(wxT("ExtSelectClipRgn"));
+        // note that we combine the new clipping region with the existing one: this
+        // is compatible with what the other ports do and is the documented
+        // behaviour now (starting with 2.3.3)
+        if ( ::ExtSelectClipRgn(GetHdc(), (HRGN)hrgn, RGN_AND) == ERROR )
+        {
+            wxLogLastError(wxT("ExtSelectClipRgn"));
 
-        return;
+            return;
+        }
     }
+    else
+    {
+        if ( ::SelectClipRgn(GetHdc(), (HRGN)hrgn) == ERROR )
+        {
+            wxLogLastError(wxT("SelectClipRgn"));
 
-    m_clipping = true;
+            return;
+        }
+
+        m_clipping = true;
+    }
 
     UpdateClipBox();
 }
@@ -449,18 +461,31 @@ void wxMSWDCImpl::DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord w, wxCoord h
     // 4 corners of the rectangle to create a polygonal clipping region
     // in device coordinates.
     POINT rect[4];
-    wxPoint p = LogicalToDevice(x, y);
-    rect[0].x = p.x;
-    rect[0].y = p.y;
-    p = LogicalToDevice(x + w, y);
-    rect[1].x = p.x;
-    rect[1].y = p.y;
-    p = LogicalToDevice(x + w, y + h);
-    rect[2].x = p.x;
-    rect[2].y = p.y;
-    p = LogicalToDevice(x, y + h);
-    rect[3].x = p.x;
-    rect[3].y = p.y;
+    {
+        // Notice that LogicalToDevice() (which uses the GDI function ::LPtoDP())
+        // returns the mirrored device coordinates of its arguments in RTL layout.
+        // Forcing LTR layout to calculate (the un-mirrored) _rect_ because passing
+        // a mirrored region to SetClippingHrgn() will effectively un-mirror it in
+        // SelectClipRgn()/ExtSelectClipRgn() which is not what we want.
+        const auto oldLayoutDir = GetLayoutDirection();
+        SetLayoutDirection(wxLayout_LeftToRight);
+
+        wxPoint p = LogicalToDevice(x, y);
+        rect[0].x = p.x;
+        rect[0].y = p.y;
+        p = LogicalToDevice(x + w, y);
+        rect[1].x = p.x;
+        rect[1].y = p.y;
+        p = LogicalToDevice(x + w, y + h);
+        rect[2].x = p.x;
+        rect[2].y = p.y;
+        p = LogicalToDevice(x, y + h);
+        rect[3].x = p.x;
+        rect[3].y = p.y;
+
+        SetLayoutDirection(oldLayoutDir);
+    }
+
     HRGN hrgn = ::CreatePolygonRgn(rect, WXSIZEOF(rect), WINDING);
     if ( !hrgn )
     {
