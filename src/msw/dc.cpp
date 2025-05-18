@@ -408,17 +408,29 @@ void wxMSWDCImpl::SetClippingHrgn(WXHRGN hrgn)
 {
     wxCHECK_RET( hrgn, wxT("invalid clipping region") );
 
-    // note that we combine the new clipping region with the existing one: this
-    // is compatible with what the other ports do and is the documented
-    // behaviour now (starting with 2.3.3)
-    if ( ::ExtSelectClipRgn(GetHdc(), (HRGN)hrgn, RGN_AND) == ERROR )
+    if ( m_clipping )
     {
-        wxLogLastError(wxT("ExtSelectClipRgn"));
+        // note that we combine the new clipping region with the existing one: this
+        // is compatible with what the other ports do and is the documented
+        // behaviour now (starting with 2.3.3)
+        if ( ::ExtSelectClipRgn(GetHdc(), (HRGN)hrgn, RGN_AND) == ERROR )
+        {
+            wxLogLastError(wxT("ExtSelectClipRgn"));
 
-        return;
+            return;
+        }
     }
+    else
+    {
+        if ( ::SelectClipRgn(GetHdc(), (HRGN)hrgn) == ERROR )
+        {
+            wxLogLastError(wxT("SelectClipRgn"));
 
-    m_clipping = true;
+            return;
+        }
+
+        m_clipping = true;
+    }
 
     UpdateClipBox();
 }
