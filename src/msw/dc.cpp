@@ -366,6 +366,9 @@ void wxMSWDCImpl::UpdateClipBox()
         m_clipY1 = (wxCoord) YDEV2LOG(rect.top);
         m_clipX2 = (wxCoord) XDEV2LOG(rect.right);
         m_clipY2 = (wxCoord) YDEV2LOG(rect.bottom);
+
+        if ( GetLayoutDirection() == wxLayout_RightToLeft )
+            ++m_clipX2;
     }
 
     m_isClipBoxValid = true;
@@ -461,6 +464,7 @@ void wxMSWDCImpl::DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord w, wxCoord h
     // 4 corners of the rectangle to create a polygonal clipping region
     // in device coordinates.
     POINT rect[4];
+#if 0
     wxPoint p = LogicalToDevice(x, y);
     rect[0].x = p.x;
     rect[0].y = p.y;
@@ -473,6 +477,53 @@ void wxMSWDCImpl::DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord w, wxCoord h
     p = LogicalToDevice(x, y + h);
     rect[3].x = p.x;
     rect[3].y = p.y;
+#else
+    rect[0].x = LogicalToDeviceX(x);
+    rect[0].y = LogicalToDeviceY(y);
+    rect[1].x = LogicalToDeviceX(x + w);
+    rect[1].y = rect[0].y;
+    rect[2].x = rect[1].x;
+    rect[2].y = LogicalToDeviceY(y + h);
+    rect[3].x = rect[0].x;
+    rect[3].y = rect[2].y;
+
+#if wxUSE_DC_TRANSFORM_MATRIX
+    // In presence of a world transform we need to apply it to the device
+    // origin shift too as it's not taken into account by the HDC itself.
+    wxAffineMatrix2D m = GetTransformMatrix();
+    if ( !m.IsIdentity() )
+    {
+        wxPoint pt(rect[0].x, rect[0].y);
+        wxPoint2DDouble dp = m.TransformPoint(pt);
+
+        // We don't use rounding here because we don't use it elsewhere.
+        rect[0].x = dp.m_x;
+        rect[0].y = dp.m_y;
+
+        pt = wxPoint(rect[1].x, rect[1].y);
+        dp = m.TransformPoint(pt);
+
+        // We don't use rounding here because we don't use it elsewhere.
+        rect[1].x = dp.m_x;
+        rect[1].y = dp.m_y;
+
+        pt = wxPoint(rect[2].x, rect[2].y);
+        dp = m.TransformPoint(pt);
+
+        // We don't use rounding here because we don't use it elsewhere.
+        rect[2].x = dp.m_x;
+        rect[2].y = dp.m_y;
+
+        pt = wxPoint(rect[3].x, rect[3].y);
+        dp = m.TransformPoint(pt);
+
+        // We don't use rounding here because we don't use it elsewhere.
+        rect[3].x = dp.m_x;
+        rect[3].y = dp.m_y;
+    }
+#endif // wxUSE_DC_TRANSFORM_MATRIX
+#endif // if 0
+
     HRGN hrgn = ::CreatePolygonRgn(rect, WXSIZEOF(rect), WINDING);
     if ( !hrgn )
     {
@@ -2002,14 +2053,9 @@ wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
         }
     }
 
-    if ( GetLayoutDirection() == wxLayout_RightToLeft )
+    if (GetLayoutDirection() == wxLayout_RightToLeft)
     {
-        // This is a workaround to fix a bug when using this function
-        // to map DP to LP in RTL layout.
-        int w, h;
-        DoGetSize(&w, &h);
-
-        x = w - pt.x - 1; // x is mirrored in RTL layout.
+        pt.x += 1;
     }
 
     return pt;
@@ -2017,16 +2063,6 @@ wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
 
 wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
 {
-    if ( GetLayoutDirection() == wxLayout_RightToLeft )
-    {
-        // This is a workaround to fix a bug when using this function
-        // to map LP to DP in RTL.
-        int w, h;
-        DoGetSize(&w, &h);
-
-        x = w - x - 1; // x is mirrored in RTL layout layout.
-    }
-
     POINT p;
     p.x = x;
     p.y = y;
