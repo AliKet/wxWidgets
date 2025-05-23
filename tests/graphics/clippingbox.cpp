@@ -1033,9 +1033,9 @@ static void OneDevRegionRTL(wxDC& dc, const wxBitmap& bmp, bool useTransformMatr
         return;
     }
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__)
     wxUnusedVar(bmp);
-    WARN("Skipping test known to fail in wxGTK");
+    WARN("Skipping test known to fail in this platform");
 #else
     // Setting one clipping region in device coordinates
     // inside transformed DC area.
@@ -1064,7 +1064,7 @@ static void OneDevRegionRTL(wxDC& dc, const wxBitmap& bmp, bool useTransformMatr
     dc.SetDeviceClippingRegion(reg);
     dc.SetBackground(wxBrush(s_fgColour, wxBRUSHSTYLE_SOLID));
     dc.Clear();
-    wxPoint pos = dc.DeviceToLogical(x+w-1, y); // right physical edge becomes left logical edge
+    wxPoint pos = dc.DeviceToLogical((s_dcSize.x-1)-x, y); // right physical edge becomes left logical edge
     wxSize dim = dc.DeviceToLogicalRel(-w, h);
     CheckClipBox(dc, bmp,
                  pos.x, pos.y, dim.x, dim.y,
