@@ -576,6 +576,22 @@ void wxQtDCImpl::DestroyClippingRegion()
     m_isClipBoxValid = false;
 }
 
+wxLayoutDirection wxQtDCImpl::GetLayoutDirection() const
+{
+    if ( m_layoutDir == wxLayout_Default && m_window )
+    {
+        return m_window->GetLayoutDirection();
+    }
+
+    return m_layoutDir;
+}
+
+void wxQtDCImpl::SetLayoutDirection(wxLayoutDirection dir)
+{
+
+    m_layoutDir = dir;
+}
+
 bool wxQtDCImpl::DoFloodFill(wxCoord x, wxCoord y, const wxColour& col,
                          wxFloodFillStyle style )
 {
