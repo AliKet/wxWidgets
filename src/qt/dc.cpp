@@ -576,6 +576,33 @@ void wxQtDCImpl::DestroyClippingRegion()
     m_isClipBoxValid = false;
 }
 
+wxLayoutDirection wxQtDCImpl::GetLayoutDirection() const
+{
+    if ( m_layoutDir == wxLayout_Default && m_window )
+    {
+        return m_window->GetLayoutDirection();
+    }
+
+    return m_layoutDir;
+}
+
+void wxQtDCImpl::SetLayoutDirection(wxLayoutDirection dir)
+{
+    if ( m_layoutDir != dir )
+    {
+        if ( m_layoutDir == wxLayout_RightToLeft || dir == wxLayout_RightToLeft )
+        {
+            int w;
+            GetSize(&w, nullptr);
+
+            m_qtPainter->translate(w, 0);
+            m_qtPainter->scale(-1, 1);
+        }
+
+        m_layoutDir = dir;
+    }
+}
+
 bool wxQtDCImpl::DoFloodFill(wxCoord x, wxCoord y, const wxColour& col,
                          wxFloodFillStyle style )
 {
