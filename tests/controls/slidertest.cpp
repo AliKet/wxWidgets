@@ -216,7 +216,15 @@ void SliderTestCase::Thumb()
 
     wxUIActionSimulator sim;
 
+#ifdef __WXQT__
+    CPPUNIT_ASSERT_EQUAL(0, changed.GetCount());
+#endif
+
     m_slider->SetValue(0);
+
+#ifdef __WXQT__
+    CPPUNIT_ASSERT_EQUAL(0, changed.GetCount());
+#endif
 
     // use the slider real position for dragging the mouse.
     const int ypos = m_slider->GetSize().y / 2;
