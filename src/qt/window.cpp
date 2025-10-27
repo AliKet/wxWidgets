@@ -1078,7 +1078,7 @@ void wxWindowQt::DoClientToScreen( int *x, int *y ) const
     {
         int width;
         DoGetSize(&width, nullptr);
-        *x = width - *x - 1;
+        *x = width - *x;
     }
 
     QPoint screenPosition = GetHandle()->mapToGlobal( QPoint( *x, *y ));

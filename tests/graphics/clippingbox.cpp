@@ -1069,7 +1069,7 @@ static void OneDevRegionRTL(wxDC& dc, const wxBitmap& bmp, bool useTransformMatr
 
     CheckClipBox(dc, bmp,
                  pos.x, pos.y, dim.x, dim.y,
-                 x2, y, w, h);
+                 x2, y, w, h, 1);
 }
 
 static void OneLargeDevRegion(wxDC& dc, const wxBitmap& bmp, bool checkExtCoords, bool useTransformMatrix, const wxPoint& parentDcOrigin)
