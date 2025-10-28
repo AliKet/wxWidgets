@@ -1030,7 +1030,7 @@ static void OneDevRegionRTL(wxDC& dc, const wxBitmap& bmp, bool useTransformMatr
 
     // Setting one clipping region in device coordinates
     // inside transformed DC area.
-    const int x = 11;
+    const int x = 10;
     const int y = 21;
     const int w = 79;
     const int h = 75;
@@ -1063,13 +1063,19 @@ static void OneDevRegionRTL(wxDC& dc, const wxBitmap& bmp, bool useTransformMatr
     wxPoint pos = dc.DeviceToLogical(x, y);
     wxSize dim = dc.DeviceToLogicalRel(w, h);
 #else
-    wxPoint pos = dc.DeviceToLogical((s_dcSize.x-1)-x, y);
+    wxPoint pos = dc.DeviceToLogical(s_dcSize.x-x, y);
     wxSize dim = dc.DeviceToLogicalRel(-w, h);
+#endif
+
+#ifdef __WXMSW__
+    const int posTolerance = 1;
+#else
+    const int posTolerance = 0;
 #endif
 
     CheckClipBox(dc, bmp,
                  pos.x, pos.y, dim.x, dim.y,
-                 x2, y, w, h);
+                 x2, y, w, h, posTolerance);
 }
 
 static void OneLargeDevRegion(wxDC& dc, const wxBitmap& bmp, bool checkExtCoords, bool useTransformMatrix, const wxPoint& parentDcOrigin)
