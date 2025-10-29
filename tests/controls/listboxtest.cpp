@@ -91,8 +91,16 @@ void ListBoxTestCase::tearDown()
     wxDELETE(m_list);
 }
 
+#ifdef __WXQT__
+#include <QLocale>
+#endif
+
 void ListBoxTestCase::Sort()
 {
+#ifdef __WXQT__
+    QLocale::setDefault(QLocale(QLocale::C));
+#endif
+
 #ifndef __WXOSX__
     wxDELETE(m_list);
     m_list = new wxListBox(wxTheApp->GetTopWindow(), wxID_ANY,

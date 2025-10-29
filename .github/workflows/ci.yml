@@ -138,9 +138,8 @@ jobs:
             configure_flags: --with-directfb --disable-stc
             skip_samples: true
             allow_warnings: true
-          - name: Ubuntu 18.04 wxQt
-            runner: ubuntu-latest
-            container: ubuntu:18.04
+          - name: Ubuntu 24.04 wxQt
+            runner: ubuntu-24.04
             configure_flags: --with-qt --without-opengl
             skip_samples: true
             use_xvfb: true
