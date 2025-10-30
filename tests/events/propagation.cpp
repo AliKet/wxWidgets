@@ -617,9 +617,7 @@ void EventPropagationTestCase::DocViewAui()
 }
 #endif // wxUSE_AUI
 
-#ifdef __WXQT__
-#include <QLocale>
-#endif
+#include "wx/private/localeset.h"
 
 void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager *manager,
                                                                         wxFrame *parent,
@@ -632,7 +630,7 @@ void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager 
                                                                         const wxString& title))
 {
 #ifdef __WXQT__
-    QLocale::setDefault(QLocale(QLocale::C));
+    wxCLocaleSetter cloc;
 #endif
 
     // Set up the parent frame and its menu bar.
