@@ -617,8 +617,6 @@ void EventPropagationTestCase::DocViewAui()
 }
 #endif // wxUSE_AUI
 
-#include "wx/private/localeset.h"
-
 void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager *manager,
                                                                         wxFrame *parent,
                                                                         wxWindowID id,
@@ -629,10 +627,6 @@ void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager 
                                                                         wxWindowID id,
                                                                         const wxString& title))
 {
-#ifdef __WXQT__
-    wxCLocaleSetter cloc;
-#endif
-
     // Set up the parent frame and its menu bar.
     wxDocManager docManager;
 

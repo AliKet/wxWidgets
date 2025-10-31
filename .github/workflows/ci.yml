@@ -150,6 +150,9 @@ jobs:
       wxUSE_ASAN: ${{ matrix.use_asan && 1 || 0 }}
       wxUSE_XVFB: ${{ matrix.use_xvfb && 1 || 0 }}
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      LANG: en_US.UTF-8
+      LANGUAGE: en_US:en
+      LC_ALL: en_US.UTF-8
 
     steps:
       - name: Set up build system
