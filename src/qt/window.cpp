@@ -1077,8 +1077,9 @@ void wxWindowQt::DoClientToScreen( int *x, int *y ) const
     if ( GetLayoutDirection() == wxLayout_RightToLeft )
     {
         int width;
-        DoGetSize(&width, nullptr);
-        *x = width - *x - 1;
+        IsTopLevel() ? DoGetClientSize(&width, nullptr)
+                     : DoGetSize(&width, nullptr);
+        *x = width - *x;
     }
 
     QPoint screenPosition = GetHandle()->mapToGlobal( QPoint( *x, *y ));
@@ -1094,8 +1095,9 @@ void wxWindowQt::DoScreenToClient( int *x, int *y ) const
     if ( GetLayoutDirection() == wxLayout_RightToLeft )
     {
         int width;
-        DoGetSize(&width, nullptr);
-        clientPosition.setX(width - clientPosition.x() - 1);
+        IsTopLevel() ? DoGetClientSize(&width, nullptr)
+                     : DoGetSize(&width, nullptr);
+        clientPosition.setX(width - clientPosition.x());
     }
 
     *x = clientPosition.x();
