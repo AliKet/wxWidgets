@@ -140,7 +140,7 @@ jobs:
             allow_warnings: true
           - name: Ubuntu 20.04 wxQt
             runner: ubuntu-latest
-            container: ubuntu-20.04
+            container: ubuntu:20.04
             configure_flags: --with-qt --without-opengl
             skip_samples: true
             use_xvfb: true
