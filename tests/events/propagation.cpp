@@ -471,6 +471,7 @@ wxMenu* CreateTestMenu(wxFrame* frame)
 #define ASSERT_MENU_EVENT_RESULT_FOR(cmd, menu, result) \
     g_str.clear();                                      \
     menu->SendEvent(cmd);                               \
+    YieldForAWhile(250);                                \
     CHECK( g_str == result )
 
 #define ASSERT_MENU_EVENT_RESULT(menu, result) \
@@ -696,25 +697,7 @@ void EventPropagationTestCase::DocViewCommon(wxFrame* (*newParent)(wxDocManager 
 
     // Check that wxDocument, wxView, wxDocManager, child frame and the parent
     // get the event in order.
-#if wxUSE_UIACTIONSIMULATOR
-    // We use wxUIActionSimulator instead of ASSERT_MENU_EVENT_RESULT because
-    // using the latter fails with wxQt on Linux.
-    wxUnusedVar(menuChild);
-    g_str.clear();
-
-    wxUIActionSimulator sim;
-    sim.Char('m', wxMOD_ALT);
-    // N.B.: Don't call wxYield() here, as this will cause the menu to appear
-    // immediately (and enter its internal message loop) and the next line will
-    // never be executed under wxMSW. In other words, the execution would block
-    // indefinitely.
-    sim.Char('a');
-    wxYield();
-
-    CHECK( g_str == "advmcpA" );
-#else // !wxUSE_UIACTIONSIMULATOR
     ASSERT_MENU_EVENT_RESULT( menuChild, "advmcpA" );
-#endif // wxUSE_UIACTIONSIMULATOR
 
 #if wxUSE_TOOLBAR
     // Also check that toolbar events get forwarded to the active child.
