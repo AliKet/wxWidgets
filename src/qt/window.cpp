@@ -1993,6 +1993,13 @@ bool wxWindowQt::QtHandleShowEvent ( QWidget *handler, QEvent *event )
     if ( GetHandle() != handler )
         return false;
 
+    if ( handler != QtGetClientWidget() &&
+         handler->testAttribute(Qt::WA_PendingResizeEvent) )
+    {
+        const auto frameSize = handler->geometry().size();
+        wxQtSetClientSize(handler, frameSize.width(), frameSize.height());
+    }
+
     wxShowEvent e(GetId(), event->type() == QEvent::Show);
     e.SetEventObject(this);
 
