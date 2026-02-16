@@ -128,6 +128,12 @@ public:
                                const wxRect& rect,
                                int flags = 0) override;
 
+    virtual void DrawTitleBarBitmap(wxWindow *win,
+                                    wxDC& dc,
+                                    const wxRect& rect,
+                                    wxTitleBarButton button,
+                                    int flags = 0) override;
+
     virtual wxSize GetCheckBoxSize(wxWindow *win, int flags = 0) override;
 
     virtual wxSplitterRenderParams GetSplitterParams(const wxWindow *win) override;
@@ -635,6 +641,68 @@ wxRendererQt::DrawFocusRect(wxWindow* win, wxDC& dc, const wxRect& rect, int WXU
     option.state = QStyle::State_FocusAtBorder | QStyle::State_HasFocus;
 
     qtStyle->drawPrimitive(QStyle::PE_FrameFocusRect, &option, painter, qtWidget);
+}
+
+void
+wxRendererQt::DrawTitleBarBitmap(wxWindow *win,
+                                 wxDC& dc,
+                                 const wxRect& rect,
+                                 wxTitleBarButton button,
+                                 int flags)
+{
+    auto painter = wxGetQtPainter(dc);
+
+    wxCHECK_RET( painter, "Invalid painter!" );
+
+    wxDCClipper clip(dc, rect);
+
+    auto qtWidget = win->GetHandle();
+    auto qtStyle = qtWidget->style();
+
+    QStyleOption option;
+    option.initFrom(qtWidget);
+    option.rect = wxQtConvertRect(rect);
+    option.state = QStyle::State_Enabled;
+
+    QStyle::StandardPixmap standardIcon;
+
+    switch ( button )
+    {
+        case wxTITLEBAR_BUTTON_CLOSE:
+            standardIcon = QStyle::SP_TitleBarCloseButton;
+            break;
+
+        case wxTITLEBAR_BUTTON_MAXIMIZE:
+            standardIcon = QStyle::SP_TitleBarMaxButton;
+            break;
+
+        case wxTITLEBAR_BUTTON_ICONIZE:
+            standardIcon = QStyle::SP_TitleBarMinButton;
+            break;
+
+        case wxTITLEBAR_BUTTON_RESTORE:
+            standardIcon = QStyle::SP_TitleBarNormalButton;
+            break;
+
+        case wxTITLEBAR_BUTTON_HELP:
+            standardIcon = QStyle::SP_TitleBarContextHelpButton;
+            break;
+
+        default:
+            wxFAIL_MSG( "unsupported title bar button" );
+            return;
+    }
+
+    if ( flags & wxCONTROL_CURRENT )
+        option.state |= QStyle::State_Active;
+
+    // Check if button is pressed
+    if ( flags & wxCONTROL_PRESSED )
+        option.state |= QStyle::State_Sunken;
+
+    QIcon icon = qtStyle->standardIcon(standardIcon, &option, qtWidget);
+
+    icon.paint(painter, option.rect);
 }
 
 namespace
