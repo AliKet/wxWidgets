@@ -45,8 +45,8 @@ bool wxBitmapButton::Create(wxWindow *parent,
 
         if ( HasFlag(wxBU_EXACTFIT) )
         {
-            GetQPushButton()->setFlat(true);
-            GetQPushButton()->setStyleSheet("QPushButton { border: none; }");
+//            GetQPushButton()->setFlat(true);
+//            GetQPushButton()->setStyleSheet("QPushButton { border: none; }");
         }
         else
         {
