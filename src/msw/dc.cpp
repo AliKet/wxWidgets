@@ -355,7 +355,7 @@ void wxMSWDCImpl::SetHDC(WXHDC dc, bool bOwnsDC)
         //   identified by the SelectClipRgn function. It is not a clipping
         //   region created when the application calls the BeginPaint function."
         //
-        HRGN hrgn;
+        HRGN hrgn = 0;
         int result = ::GetClipRgn((WXHDC)m_hDC, hrgn);
         if ( result == -1 )
         {
