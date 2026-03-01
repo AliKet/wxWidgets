@@ -339,6 +339,37 @@ void wxMSWDCImpl::SelectOldObjects(WXHDC dc)
     m_selectedBitmap = wxNullBitmap;
 }
 
+void wxMSWDCImpl::SetHDC(WXHDC dc, bool bOwnsDC)
+{
+    m_hDC = dc;
+    m_bOwnsDC = bOwnsDC;
+
+    m_isClipBoxValid = false;
+
+    if ( m_hDC != 0 )
+    {
+        // Notice that m_clipping is initialized to true only if there is
+        // an application-defined clipping region already set on the device.
+        // Quoting the MSDN:
+        //  "An application-defined clipping region is a clipping region
+        //   identified by the SelectClipRgn function. It is not a clipping
+        //   region created when the application calls the BeginPaint function."
+        //
+        HRGN hrgn;
+        int result = ::GetClipRgn((WXHDC)m_hDC, hrgn);
+        if ( result == -1 )
+        {
+            wxLogLastError("GetClipRgn");
+        }
+        else
+        {
+            // We might have a pre-existing clipping region; make sure that we
+            // return it if asked for.
+            m_clipping = result;
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // clipping
 // ---------------------------------------------------------------------------

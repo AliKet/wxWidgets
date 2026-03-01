@@ -117,17 +117,7 @@ public:
     }
 
     WXHDC GetHDC() const { return m_hDC; }
-    void SetHDC(WXHDC dc, bool bOwnsDC = false)
-    {
-        m_hDC = dc;
-        m_bOwnsDC = bOwnsDC;
-
-        // we might have a pre existing clipping region, make sure that we
-        // return it if asked -- but avoid calling ::GetClipBox() right now as
-        // it could be unnecessary wasteful
-        m_clipping = true;
-        m_isClipBoxValid = false;
-    }
+    void SetHDC(WXHDC dc, bool bOwnsDC = false);
 
     void* GetHandle() const override { return (void*)GetHDC(); }
 
