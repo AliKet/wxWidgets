@@ -1082,6 +1082,16 @@ void wxWindowBase::DoGetScreenPosition(int *x, int *y) const
         *y = 0;
 
     ClientToScreen(x, y);
+
+    if ( x && GetLayoutDirection() == wxLayout_RightToLeft )
+    {
+        // In RTL layout, ClientToScreen(0, 0) correctly returns the upper-right corner
+        // of the window (for non TLWs). But wxWidgets expects GetScreenPosition() to
+        // always return the upper-left corner instead to work with.
+        int width;
+        DoGetSize(&width, nullptr);
+        *x -= width;
+    }
 }
 
 void wxWindowBase::SendSizeEvent(int flags)
