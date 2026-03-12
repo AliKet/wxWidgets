@@ -1905,6 +1905,14 @@ wxGDIPlusContext::wxGDIPlusContext( wxGraphicsRenderer* renderer, HDC hdc, wxDou
     : wxGraphicsContext(renderer)
     , m_layoutDir((::GetLayout(hdc) & LAYOUT_RTL) ? wxLayout_RightToLeft : wxLayout_LeftToRight)
 {
+    if ( m_layoutDir == wxLayout_RightToLeft )
+    {
+        // For expected results, always perform drawing operations on an LTR HDC.
+        // A transformation matrix will be applied to this context to achieve the
+        // necessary mirroring effects.
+        ::SetLayout(hdc, 0);
+    }
+
     Init(new Graphics(hdc), width, height);
 }
 
@@ -1913,6 +1921,15 @@ wxGDIPlusContext::wxGDIPlusContext( wxGraphicsRenderer* renderer, const wxDC& dc
     , m_layoutDir(dc.GetLayoutDirection())
 {
     HDC hdc = (HDC) dc.GetHDC();
+
+    if ( m_layoutDir == wxLayout_RightToLeft )
+    {
+        // For expected results, always perform drawing operations on an LTR HDC.
+        // A transformation matrix will be applied to this context to achieve the
+        // necessary mirroring effects.
+        ::SetLayout(hdc, 0);
+    }
+
     wxSize sz = dc.GetSize();
 
     // We don't set HDC origin at MSW level in wxDC because this limits it to
@@ -1995,6 +2012,13 @@ void wxGDIPlusContext::Init(Graphics* graphics, int width, int height, const Mat
 
 wxGDIPlusContext::~wxGDIPlusContext()
 {
+    if ( m_layoutDir == wxLayout_RightToLeft )
+    {
+        WXHDC hdc = GetNativeHDC();
+        ::SetLayout((HDC)hdc, LAYOUT_RTL);
+        ReleaseNativeHDC(hdc);
+    }
+
     delete m_internalTransform;
     delete m_internalTransformInv;
     if ( m_context )
