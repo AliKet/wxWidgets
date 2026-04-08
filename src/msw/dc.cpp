@@ -102,6 +102,10 @@ static const int VIEWPORT_EXTENT = 134217727;
 #define XDEV2LOG(x) ((x) - (m_deviceOriginX*m_signX / m_scaleX))
 #define YDEV2LOG(y) ((y) - (m_deviceOriginY*m_signY / m_scaleY))
 
+#define wxSCOPED_DC_RTL_DISABLER()                      \
+    const auto oldLayoutDir = ::SetLayout(GetHdc(), 0); \
+    wxON_BLOCK_EXIT2(::SetLayout, GetHdc(), oldLayoutDir)
+
 // ---------------------------------------------------------------------------
 // private functions
 // ---------------------------------------------------------------------------
@@ -346,6 +350,8 @@ void wxMSWDCImpl::SelectOldObjects(WXHDC dc)
 
 void wxMSWDCImpl::UpdateClipBox()
 {
+    wxSCOPED_DC_RTL_DISABLER();
+
     RECT rect;
     if ( ::GetClipBox(GetHdc(), &rect) == ERROR )
     {
@@ -2025,10 +2031,6 @@ wxSize wxMSWDCImpl::MSWLogicalToDeviceRel(int x, int y) const
     ::LPtoDP(GetHdc(), p, WXSIZEOF(p));
     return wxSize(p[1].x-p[0].x, p[1].y-p[0].y);
 }
-
-#define wxSCOPED_DC_RTL_DISABLER()                      \
-    const auto oldLayoutDir = ::SetLayout(GetHdc(), 0); \
-    wxON_BLOCK_EXIT2(::SetLayout, GetHdc(), oldLayoutDir)
 
 wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
 {
