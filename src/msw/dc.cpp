@@ -38,6 +38,7 @@
 #include "wx/msw/dc.h"
 
 #include "wx/scopedarray.h"
+#include "wx/scopeguard.h"
 #include "wx/sysopt.h"
 
 #ifdef wxHAS_RAW_BITMAP
@@ -461,27 +462,19 @@ void wxMSWDCImpl::DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord w, wxCoord h
     // 4 corners of the rectangle to create a polygonal clipping region
     // in device coordinates.
     POINT rect[4];
-    {
-        // Forcing LTR layout to calculate _rect_, otherwise the region created
-        // by CreatePolygonRgn() will not be correct in RTL layout.
-        const auto oldLayoutDir = GetLayoutDirection();
-        SetLayoutDirection(wxLayout_LeftToRight);
 
-        wxPoint p = LogicalToDevice(x, y);
-        rect[0].x = p.x;
-        rect[0].y = p.y;
-        p = LogicalToDevice(x + w, y);
-        rect[1].x = p.x;
-        rect[1].y = p.y;
-        p = LogicalToDevice(x + w, y + h);
-        rect[2].x = p.x;
-        rect[2].y = p.y;
-        p = LogicalToDevice(x, y + h);
-        rect[3].x = p.x;
-        rect[3].y = p.y;
-
-        SetLayoutDirection(oldLayoutDir);
-    }
+    wxPoint p = LogicalToDevice(x, y);
+    rect[0].x = p.x;
+    rect[0].y = p.y;
+    p = LogicalToDevice(x + w, y);
+    rect[1].x = p.x;
+    rect[1].y = p.y;
+    p = LogicalToDevice(x + w, y + h);
+    rect[2].x = p.x;
+    rect[2].y = p.y;
+    p = LogicalToDevice(x, y + h);
+    rect[3].x = p.x;
+    rect[3].y = p.y;
 
     HRGN hrgn = ::CreatePolygonRgn(rect, WXSIZEOF(rect), WINDING);
     if ( !hrgn )
@@ -1956,7 +1949,7 @@ void wxMSWDCImpl::SetDeviceOrigin(wxCoord x, wxCoord y)
     m_isClipBoxValid = false;
 }
 
-wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
+wxPoint wxMSWDCImpl::MSWDeviceToLogical(wxCoord x, wxCoord y) const
 {
     POINT p;
     p.x = x;
@@ -2002,7 +1995,7 @@ wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
     return pt;
 }
 
-wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
+wxPoint wxMSWDCImpl::MSWLogicalToDevice(wxCoord x, wxCoord y) const
 {
     POINT p;
     p.x = x;
@@ -2011,7 +2004,7 @@ wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
     return wxPoint(p.x + m_deviceOriginX, p.y + m_deviceOriginY);
 }
 
-wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
+wxSize wxMSWDCImpl::MSWDeviceToLogicalRel(int x, int y) const
 {
     POINT p[2];
     p[0].x = 0;
@@ -2022,7 +2015,7 @@ wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
     return wxSize(p[1].x-p[0].x, p[1].y-p[0].y);
 }
 
-wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
+wxSize wxMSWDCImpl::MSWLogicalToDeviceRel(int x, int y) const
 {
     POINT p[2];
     p[0].x = 0;
@@ -2031,6 +2024,38 @@ wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
     p[1].y = y;
     ::LPtoDP(GetHdc(), p, WXSIZEOF(p));
     return wxSize(p[1].x-p[0].x, p[1].y-p[0].y);
+}
+
+#define wxSCOPED_DC_RTL_DISABLER()                      \
+    const auto oldLayoutDir = ::SetLayout(GetHdc(), 0); \
+    wxON_BLOCK_EXIT2(::SetLayout, GetHdc(), oldLayoutDir)
+
+wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWDeviceToLogical(x, y);
+}
+
+wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWLogicalToDevice(x, y);
+}
+
+wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWDeviceToLogicalRel(x, y);
+}
+
+wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWLogicalToDeviceRel(x, y);
 }
 
 // ----------------------------------------------------------------------------
@@ -2367,10 +2392,12 @@ bool wxMSWDCImpl::DoStretchBlit(wxCoord xdest, wxCoord ydest,
                 // automatically as it doesn't even work with the source HDC.
                 // So do this manually to ensure that the coordinates are
                 // interpreted in the same way here as in all the other cases.
-                xsrc = source->LogicalToDeviceX(xsrcOrig);
-                ysrc = source->LogicalToDeviceY(ysrcOrig);
-                srcWidth = source->LogicalToDeviceXRel(srcWidth);
-                srcHeight = source->LogicalToDeviceYRel(srcHeight);
+                const auto devPos = implSrc->MSWLogicalToDevice(xsrcOrig, ysrcOrig);
+                const auto devSize = implSrc->MSWLogicalToDeviceRel(srcWidth, srcHeight);
+                xsrc = devPos.x;
+                ysrc = devPos.y;
+                srcWidth = devSize.x;
+                srcHeight = devSize.y;
 
                 // Figure out what co-ordinate system we're supposed to specify
                 // ysrc in.

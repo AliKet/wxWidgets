@@ -89,6 +89,11 @@ public:
     virtual wxSize DeviceToLogicalRel(int x, int y) const override;
     virtual wxSize LogicalToDeviceRel(int x, int y) const override;
 
+    wxPoint MSWDeviceToLogical(wxCoord x, wxCoord y) const;
+    wxPoint MSWLogicalToDevice(wxCoord x, wxCoord y) const;
+    wxSize MSWDeviceToLogicalRel(int x, int y) const;
+    wxSize MSWLogicalToDeviceRel(int x, int y) const;
+
 #if wxUSE_DC_TRANSFORM_MATRIX
     virtual bool CanUseTransformMatrix() const override;
     virtual bool SetTransformMatrix(const wxAffineMatrix2D& matrix) override;
