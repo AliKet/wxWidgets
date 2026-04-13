@@ -38,6 +38,7 @@
 #include "wx/msw/dc.h"
 
 #include "wx/scopedarray.h"
+#include "wx/scopeguard.h"
 #include "wx/sysopt.h"
 
 #ifdef wxHAS_RAW_BITMAP
@@ -68,7 +69,7 @@ wxIMPLEMENT_ABSTRACT_CLASS(wxMSWDCImpl, wxDCImpl);
 
 // The device space in Win32 GDI measures 2^27*2^27 , so we use 2^27-1 as the
 // maximal possible view port extent.
-static const int VIEWPORT_EXTENT = 134217727;
+static const int VIEWPORT_EXTENT = 134217726;
 
 // ROPs which don't have standard names (see "Ternary Raster Operations" in the
 // MSDN docs for how this and other numbers in wxDC::Blit() are obtained)
@@ -77,6 +78,7 @@ static const int VIEWPORT_EXTENT = 134217727;
 // ----------------------------------------------------------------------------
 // macros for logical <-> device coords conversion
 // ----------------------------------------------------------------------------
+#define wxUSE_BUILTIN_DEVICE_ORG 0
 
 /*
    We currently let Windows perform the scaling itself, as it might be more
@@ -95,11 +97,21 @@ static const int VIEWPORT_EXTENT = 134217727;
         logical = (physical - deviceOrigin)/scale + logicalOrigin
         device  = physical/scale + logicalOrigin = logical + deviceOrigin/scale
  */
-
+#if wxUSE_BUILTIN_DEVICE_ORG
+#define XLOG2DEV(x) (x)
+#define YLOG2DEV(y) (y)
+#define XDEV2LOG(x) (x)
+#define YDEV2LOG(y) (y)
+#else
 #define XLOG2DEV(x) ((x) + (m_deviceOriginX*m_signX / m_scaleX))
 #define YLOG2DEV(y) ((y) + (m_deviceOriginY*m_signY / m_scaleY))
 #define XDEV2LOG(x) ((x) - (m_deviceOriginX*m_signX / m_scaleX))
 #define YDEV2LOG(y) ((y) - (m_deviceOriginY*m_signY / m_scaleY))
+#endif
+
+#define wxSCOPED_DC_RTL_DISABLER()                      \
+    const auto oldLayoutDir = ::SetLayout(GetHdc(), 0); \
+    wxON_BLOCK_EXIT2(::SetLayout, GetHdc(), oldLayoutDir)
 
 // ---------------------------------------------------------------------------
 // private functions
@@ -461,27 +473,19 @@ void wxMSWDCImpl::DoSetClippingRegion(wxCoord x, wxCoord y, wxCoord w, wxCoord h
     // 4 corners of the rectangle to create a polygonal clipping region
     // in device coordinates.
     POINT rect[4];
-    {
-        // Forcing LTR layout to calculate _rect_, otherwise the region created
-        // by CreatePolygonRgn() will not be correct in RTL layout.
-        const auto oldLayoutDir = GetLayoutDirection();
-        SetLayoutDirection(wxLayout_LeftToRight);
 
-        wxPoint p = LogicalToDevice(x, y);
-        rect[0].x = p.x;
-        rect[0].y = p.y;
-        p = LogicalToDevice(x + w, y);
-        rect[1].x = p.x;
-        rect[1].y = p.y;
-        p = LogicalToDevice(x + w, y + h);
-        rect[2].x = p.x;
-        rect[2].y = p.y;
-        p = LogicalToDevice(x, y + h);
-        rect[3].x = p.x;
-        rect[3].y = p.y;
-
-        SetLayoutDirection(oldLayoutDir);
-    }
+    wxPoint p = LogicalToDevice(x, y);
+    rect[0].x = p.x;
+    rect[0].y = p.y;
+    p = LogicalToDevice(x + w, y);
+    rect[1].x = p.x;
+    rect[1].y = p.y;
+    p = LogicalToDevice(x + w, y + h);
+    rect[2].x = p.x;
+    rect[2].y = p.y;
+    p = LogicalToDevice(x, y + h);
+    rect[3].x = p.x;
+    rect[3].y = p.y;
 
     HRGN hrgn = ::CreatePolygonRgn(rect, WXSIZEOF(rect), WINDING);
     if ( !hrgn )
@@ -1828,7 +1832,9 @@ void wxMSWDCImpl::RealizeScaleAndOrigin()
 
     ::SetViewportExtEx(GetHdc(), devExtX, devExtY, nullptr);
     ::SetWindowExtEx(GetHdc(), logExtX, logExtY, nullptr);
-
+#if wxUSE_BUILTIN_DEVICE_ORG
+    ::SetViewportOrgEx(GetHdc(), m_deviceOriginX, m_deviceOriginY, nullptr);
+#endif
     ::SetWindowOrgEx(GetHdc(), m_logicalOriginX, m_logicalOriginY, nullptr);
 
     m_isClipBoxValid = false;
@@ -1950,13 +1956,16 @@ void wxMSWDCImpl::SetDeviceOrigin(wxCoord x, wxCoord y)
 
     wxDCImpl::SetDeviceOrigin( x, y );
 
+#if wxUSE_BUILTIN_DEVICE_ORG
+    RealizeScaleAndOrigin();
+#endif //wxUSE_BUILTIN_DEVICE_ORG
     // Do not call RealizeScaleAndOrigin(), we don't rely on Windows for the
     // device origin translation.
 
     m_isClipBoxValid = false;
 }
 
-wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
+wxPoint wxMSWDCImpl::MSWDeviceToLogical(wxCoord x, wxCoord y) const
 {
     POINT p;
     p.x = x;
@@ -1964,7 +1973,7 @@ wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
     ::DPtoLP(GetHdc(), &p, 1);
 
     wxPoint pt(p.x, p.y);
-
+#if !wxUSE_BUILTIN_DEVICE_ORG
     if ( m_deviceOriginX || m_deviceOriginY )
     {
         // Note the minus sign, we use it for convenience here as we actually
@@ -1998,20 +2007,24 @@ wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
             pt.y += dy;
         }
     }
-
+#endif // wxUSE_BUILTIN_DEVICE_ORG
     return pt;
 }
 
-wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
+wxPoint wxMSWDCImpl::MSWLogicalToDevice(wxCoord x, wxCoord y) const
 {
     POINT p;
     p.x = x;
     p.y = y;
     ::LPtoDP(GetHdc(), &p, 1);
+#if wxUSE_BUILTIN_DEVICE_ORG
+    return wxPoint(p.x, p.y);
+#else
     return wxPoint(p.x + m_deviceOriginX, p.y + m_deviceOriginY);
+#endif // wxUSE_BUILTIN_DEVICE_ORG
 }
 
-wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
+wxSize wxMSWDCImpl::MSWDeviceToLogicalRel(int x, int y) const
 {
     POINT p[2];
     p[0].x = 0;
@@ -2022,7 +2035,7 @@ wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
     return wxSize(p[1].x-p[0].x, p[1].y-p[0].y);
 }
 
-wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
+wxSize wxMSWDCImpl::MSWLogicalToDeviceRel(int x, int y) const
 {
     POINT p[2];
     p[0].x = 0;
@@ -2031,6 +2044,34 @@ wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
     p[1].y = y;
     ::LPtoDP(GetHdc(), p, WXSIZEOF(p));
     return wxSize(p[1].x-p[0].x, p[1].y-p[0].y);
+}
+
+wxPoint wxMSWDCImpl::DeviceToLogical(wxCoord x, wxCoord y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWDeviceToLogical(x, y);
+}
+
+wxPoint wxMSWDCImpl::LogicalToDevice(wxCoord x, wxCoord y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWLogicalToDevice(x, y);
+}
+
+wxSize wxMSWDCImpl::DeviceToLogicalRel(int x, int y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWDeviceToLogicalRel(x, y);
+}
+
+wxSize wxMSWDCImpl::LogicalToDeviceRel(int x, int y) const
+{
+    wxSCOPED_DC_RTL_DISABLER();
+
+    return MSWLogicalToDeviceRel(x, y);
 }
 
 // ----------------------------------------------------------------------------
@@ -2146,7 +2187,11 @@ bool wxMSWDCImpl::DoStretchBlit(wxCoord xdest, wxCoord ydest,
     ydest += YLOG2DEV(0);
 
     // Adjust for RTL layout to fix problems during scrolling, see #26266.
+#if wxUSE_BUILTIN_DEVICE_ORG
+    const int xsrcOrig = xsrc;
+#else
     const int xsrcOrig = GetLayoutDirection() == wxLayout_LeftToRight ? xsrc : -xsrc;
+#endif
     const int ysrcOrig = ysrc;
 
     // This does the same thing as XLOG2DEV() but for the source DC.
@@ -2367,10 +2412,12 @@ bool wxMSWDCImpl::DoStretchBlit(wxCoord xdest, wxCoord ydest,
                 // automatically as it doesn't even work with the source HDC.
                 // So do this manually to ensure that the coordinates are
                 // interpreted in the same way here as in all the other cases.
-                xsrc = source->LogicalToDeviceX(xsrcOrig);
-                ysrc = source->LogicalToDeviceY(ysrcOrig);
-                srcWidth = source->LogicalToDeviceXRel(srcWidth);
-                srcHeight = source->LogicalToDeviceYRel(srcHeight);
+                const auto devPos = implSrc->MSWLogicalToDevice(xsrcOrig, ysrcOrig);
+                const auto devSize = implSrc->MSWLogicalToDeviceRel(srcWidth, srcHeight);
+                xsrc = devPos.x;
+                ysrc = devPos.y;
+                srcWidth = devSize.x;
+                srcHeight = devSize.y;
 
                 // Figure out what co-ordinate system we're supposed to specify
                 // ysrc in.
