@@ -1774,7 +1774,7 @@ bool wxMSWDCImpl::DoGetPartialTextExtents(const wxString& text, wxArrayInt& widt
 
 namespace
 {
-
+#if 0
 void ApplyEffectiveScale(double scale, int sign, int *device, int *logical)
 {
     // The device space in Win32 GDI measures 2^27*2^27 , so we use 2^27-1 as the
@@ -1800,7 +1800,7 @@ void ApplyEffectiveScale(double scale, int sign, int *device, int *logical)
     *device = wxRound(physExtent);
     *logical = sign*wxRound(VIEWPORT_EXTENT/scale);
 }
-
+#endif
 bool wxDoubleToFraction(double x, int* num, int* den)
 {
     if ( wxIsSameDouble(x, 0.0) || wxIsSameDouble(x, 1.0)  )
