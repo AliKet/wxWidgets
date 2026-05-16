@@ -1801,6 +1801,57 @@ void ApplyEffectiveScale(double scale, int sign, int *device, int *logical)
     *logical = sign*wxRound(VIEWPORT_EXTENT/scale);
 }
 
+bool wxDoubleToFraction(double x, int* num, int* den)
+{
+    if ( wxIsSameDouble(x, 0.0) || wxIsSameDouble(x, 1.0)  )
+    {
+        *num = 1;
+        *den = 1;
+
+        return true;
+    }
+
+    // The device space in Win32 GDI measures 2^27*2^27 , so we use 2^27-1 as the
+    // maximal possible view port extent.
+    static const int VIEWPORT_EXTENT = 134217727;
+    static const int MAX_DEN = 1000;
+
+    const double tolerance = 1e-10;
+    long long a0 = static_cast<long long>(x);
+    double frac = x - a0;
+    long long h_prev = 1, k_prev = 0;
+    long long h = a0, k = 1;
+
+    while ( frac > tolerance && k <= MAX_DEN )
+    {
+        double next = 1.0 / frac;
+        long long a = static_cast<long long>(next);
+
+        long long h_next = a * h + h_prev;
+        long long k_next = a * k + k_prev;
+
+        if ( k_next > MAX_DEN )
+            break;
+
+        h_prev = h;
+        k_prev = k;
+        h = h_next;
+        k = k_next;
+
+        frac = next - a;
+    }
+
+    if ( h < VIEWPORT_EXTENT )
+    {
+        *num = static_cast<int>(h);
+        *den = static_cast<int>(k);
+
+        return true;
+    }
+
+    return false;
+}
+
 } // anonymous namespace
 
 void wxMSWDCImpl::RealizeScaleAndOrigin()
@@ -1813,7 +1864,7 @@ void wxMSWDCImpl::RealizeScaleAndOrigin()
     // wxWidgets API assumes that the coordinate space is "infinite" (i.e. only
     // limited by 2^32 range of the integer coordinates) but in MSW API we must
     // actually specify the extents that we use so compute them here.
-
+#if 0
     int devExtX, devExtY,   // Viewport, i.e. device space, extents.
         logExtX, logExtY;   // Window, i.e. logical coordinate space, extents.
 
@@ -1832,6 +1883,23 @@ void wxMSWDCImpl::RealizeScaleAndOrigin()
 
     ::SetViewportExtEx(GetHdc(), devExtX, devExtY, nullptr);
     ::SetWindowExtEx(GetHdc(), logExtX, logExtY, nullptr);
+#else
+    int devExtX, devExtY,       // Viewport, i.e. device space, extents.
+        logScaleX, logScaleY;   // Window, i.e. logical coordinate space, scales.
+
+    if ( !wxDoubleToFraction(m_scaleX*m_signX, &devExtX, &logScaleX) ||
+         !wxDoubleToFraction(m_scaleY*m_signY, &devExtY, &logScaleY) )
+    {
+        return;
+    }
+
+//    wxLogMessage("devExtX: %d, logScaleX: %d wx", devExtX, logScaleX);
+
+    ::SetWindowExtEx(GetHdc(), 1, 1, nullptr);
+    ::SetViewportExtEx(GetHdc(), devExtX, devExtY, nullptr);
+
+    ::ScaleWindowExtEx(GetHdc(), logScaleX, 1, logScaleY, 1, nullptr);
+#endif
 
     ::SetWindowOrgEx(GetHdc(), m_logicalOriginX, m_logicalOriginY, nullptr);
 
@@ -2405,6 +2473,11 @@ bool wxMSWDCImpl::DoStretchBlit(wxCoord xdest, wxCoord ydest,
 
                         xdest += dstWidth;
                         dstWidth = -dstWidth;
+
+                        if ( (xdest % 2) == 0 )
+                        {
+                            xdest -= 1;
+                        }
                     }
                 }
 
