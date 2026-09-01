@@ -13,6 +13,7 @@
 
 #include "wx/msgdlg.h"
 #include "wx/filedlg.h"
+#include "wx/timer.h"
 
 // This test suite tests helpers from wx/testing.h intended for testing of code
 // that calls modal dialogs. It does not test the implementation of wxWidgets'
@@ -142,4 +143,44 @@ TEST_CASE("Modal::InitDialog", "[modal]")
     MyModalDialog dlg;
     dlg.ShowModal();
     CHECK( dlg.WasModal() );
+}
+
+
+TEST_CASE("Modal::EndModalDuringInit", "[modal]")
+{
+    wxDialog dialog(nullptr, wxID_ANY, "End modal during initialization");
+    int initCalls = 0;
+    int expectedCode = wxID_YES;
+    int timerCalls = 0;
+
+    wxTimer watchdog;
+    watchdog.Bind(wxEVT_TIMER,
+                    [&dialog, &timerCalls](wxTimerEvent&)
+                    {
+                        ++timerCalls;
+                        dialog.EndModal(wxID_ABORT);
+                    });
+
+    dialog.Bind(wxEVT_INIT_DIALOG,
+                [&](wxInitDialogEvent&)
+                {
+                    ++initCalls;
+                    CHECK(dialog.IsModal());
+                    dialog.EndModal(expectedCode);
+                });
+
+    for ( const int code : { wxID_YES, wxID_NO } )
+    {
+        expectedCode = code;
+        watchdog.StartOnce(1000);
+        const int result = dialog.ShowModal();
+        watchdog.Stop();
+
+        CHECK(result == code);
+        CHECK(timerCalls == 0);
+        CHECK_FALSE(dialog.IsShown());
+        CHECK_FALSE(dialog.IsModal());
+    }
+
+    CHECK(initCalls == 2);
 }
