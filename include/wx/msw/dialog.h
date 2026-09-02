@@ -45,7 +45,7 @@ public:
     virtual ~wxDialog();
 
     // return true if we're showing the dialog modally
-    virtual bool IsModal() const override { return m_modalData != nullptr; }
+    virtual bool IsModal() const override { return m_modalShowing; }
 
     // show the dialog modally and return the value passed to EndModal()
     virtual int ShowModal() override;
@@ -85,6 +85,8 @@ private:
 
     // this pointer is non-null only while the modal event loop is running
     wxDialogModalData *m_modalData;
+
+    bool m_modalShowing;
 
     wxDECLARE_DYNAMIC_CLASS(wxDialog);
     wxDECLARE_NO_COPY_CLASS(wxDialog);

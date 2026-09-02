@@ -56,6 +56,11 @@ class wxDialogModalData
 public:
     wxDialogModalData(wxDialog *dialog) : m_evtLoop(dialog) { }
 
+    bool IsRunning() const
+    {
+        return m_evtLoop.IsRunning();
+    }
+
     void RunLoop()
     {
         m_evtLoop.Run();
@@ -147,6 +152,7 @@ GripperProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam,
 void wxDialog::Init()
 {
     m_isShown = false;
+    m_modalShowing = false;
     m_modalData = nullptr;
     m_hGripper = 0;
 }
@@ -197,14 +203,14 @@ bool wxDialog::Show(bool show)
     if ( show == IsShown() )
         return false;
 
-    if ( !show && m_modalData )
+    if ( !show && IsModal() )
     {
         // we need to do this before calling wxDialogBase version because if we
         // had disabled other app windows, they must be reenabled right now as
         // if they stay disabled Windows will activate another window (one
         // which is enabled, anyhow) when we're hidden in the base class Show()
         // and we will lose activation
-        m_modalData->ExitLoop();
+        EndModal( wxID_CANCEL );
     }
 
     if ( show )
@@ -216,9 +222,11 @@ bool wxDialog::Show(bool show)
         // which will change the controls values so do it before showing as
         // otherwise we could have some flicker
         InitDialog();
+
+        show = GetReturnCode() == 0;
     }
 
-    wxDialogBase::Show(show);
+    bool ret = wxDialogBase::Show(show);
 
     if ( show )
     {
@@ -233,7 +241,7 @@ bool wxDialog::Show(bool show)
                       SIZE_RESTORED, MAKELPARAM(size.x, size.y));
     }
 
-    return true;
+    return ret;
 }
 
 // show dialog modally
@@ -243,17 +251,19 @@ int wxDialog::ShowModal()
 
     wxASSERT_MSG( !IsModal(), wxT("ShowModal() can't be called twice") );
 
-    wxDialogModalDataTiedPtr modalData(&m_modalData,
-                                       new wxDialogModalData(this));
+    m_modalShowing = true;
 
     Show();
 
     // EndModal may have been called from InitDialog handler (called from
     // inside Show()) and hidden the dialog back again
     if ( IsShown() )
-        modalData->RunLoop();
-    else
-        m_modalData->ExitLoop();
+    {
+        wxDialogModalDataTiedPtr modalData(&m_modalData,
+                                           new wxDialogModalData(this));
+
+        m_modalData->RunLoop();
+    }
 
     return GetReturnCode();
 }
@@ -264,7 +274,14 @@ void wxDialog::EndModal(int retCode)
 
     SetReturnCode(retCode);
 
-    Hide();
+    m_modalShowing = false;
+
+    if ( m_modalData && m_modalData->IsRunning() )
+    {
+        m_modalData->ExitLoop();
+    }
+
+    wxDialogBase::Show(false);
 }
 
 // ----------------------------------------------------------------------------
