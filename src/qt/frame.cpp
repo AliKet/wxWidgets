@@ -21,6 +21,8 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QStatusBar>
+#include <QtWidgets/QToolBar>
 
 class wxQtMainWindow : public wxQtEventSignalHandler< QMainWindow, wxFrame >
 {
@@ -230,6 +232,56 @@ wxPoint wxFrame::GetClientAreaOrigin() const
     }
 
     return wxWindow::GetClientAreaOrigin();
+}
+
+// ----------------------------------------------------------------------------
+// wxFrame client size calculations
+// ----------------------------------------------------------------------------
+
+void wxFrame::DoSetClientSize(int width, int height)
+{
+    const bool hasPendingResize =
+        GetHandle()->testAttribute(Qt::WA_PendingResizeEvent);
+
+    auto menubar = GetMenuBar();
+    if ( menubar && menubar->IsShown() )
+    {
+        if ( hasPendingResize )
+            height += menubar->GetHandle()->heightForWidth(GetSize().x);
+        else
+            height += menubar->GetSize().y;
+    }
+
+#if wxUSE_STATUSBAR
+    auto statbar = GetStatusBar();
+    if ( statbar && statbar->IsShown() )
+    {
+        if ( hasPendingResize )
+            height += statbar->GetHandle()->sizeHint().height();
+        else
+            height += statbar->GetSize().y;
+    }
+#endif // wxUSE_STATUSBAR
+
+#if wxUSE_TOOLBAR
+    auto toolbar = GetToolBar();
+    if ( toolbar && toolbar->IsShown() )
+    {
+        wxSize tbSize;
+
+        if ( hasPendingResize )
+            tbSize = wxQtConvertSize(toolbar->GetHandle()->sizeHint());
+        else
+            tbSize = toolbar->GetSize();
+
+        if ( toolbar->IsVertical() )
+            width  += tbSize.x;
+        else
+            height += tbSize.y;
+    }
+#endif // wxUSE_TOOLBAR
+
+    wxFrameBase::DoSetClientSize(width, height);
 }
 
 QMainWindow *wxFrame::GetQMainWindow() const
