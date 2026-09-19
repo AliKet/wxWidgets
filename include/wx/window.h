@@ -1304,6 +1304,14 @@ public:
     wxCaret *GetCaret() const { return m_caret; }
 #endif // wxUSE_CARET
 
+    // input method (IME) support
+    // --------------------------
+
+        // enable or disable input method for this window, it's enabled by
+        // default but can be disabled for windows not accepting text input
+    void EnableInputMethod(bool enable = true);
+    bool IsInputMethodEnabled() const { return m_enableIME; }
+
         // get the (average) character size for the current font
     virtual int GetCharHeight() const = 0;
     virtual int GetCharWidth() const = 0;
@@ -1799,6 +1807,10 @@ protected:
     // widgets state are necessary
     virtual void DoEnable(bool WXUNUSED(enable)) { }
 
+    // this method should be implemented to really enable or disable input
+    // method for this window, it's only called if the state changes
+    virtual void DoEnableInputMethod(bool WXUNUSED(enable)) { }
+
 
     // the window id - a number which uniquely identifies a window among
     // its siblings unless it is wxID_ANY
@@ -1889,6 +1901,9 @@ protected:
     // flags disabling or enabling accepting focus from keyboard
     bool                 m_disableFocusFromKbd:1;
     bool                 m_enableFocusFromKbd:1;
+
+    // flag controlling the use of IME (enabled by default)
+    bool                 m_enableIME:1;
 
     // window attributes
     long                 m_windowStyle,

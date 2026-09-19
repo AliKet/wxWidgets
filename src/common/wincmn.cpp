@@ -317,6 +317,8 @@ wxWindowBase::wxWindowBase()
     m_disableFocusFromKbd = false;
     m_enableFocusFromKbd = false;
 
+    m_enableIME = true;
+
 #if wxUSE_DRAG_AND_DROP
     m_dropTarget = nullptr;
 #endif // wxUSE_DRAG_AND_DROP
@@ -1787,6 +1789,20 @@ void wxWindowBase::SetCaret(wxCaret *caret)
     }
 }
 #endif // wxUSE_CARET
+
+// ----------------------------------------------------------------------------
+// input method support
+// ----------------------------------------------------------------------------
+
+void wxWindowBase::EnableInputMethod(bool enable)
+{
+    if ( enable == m_enableIME )
+        return;
+
+    m_enableIME = enable;
+
+    DoEnableInputMethod(enable);
+}
 
 #if wxUSE_VALIDATORS
 // ----------------------------------------------------------------------------
