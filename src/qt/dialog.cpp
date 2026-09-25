@@ -81,7 +81,6 @@ int wxDialog::ShowModal()
     QtReleaseMouseAndNotify();
 
     QDialog *qDialog = GetDialogHandle();
-    qDialog->setModal(true);
 
     Show(true);
 
@@ -90,6 +89,7 @@ int wxDialog::ShowModal()
 
     if ( IsShown() )
     {
+        qDialog->setModal(true);
         bool ret = qDialog->exec();
         if ( GetReturnCode() == 0 )
             return ret ? wxID_OK : wxID_CANCEL;
@@ -101,9 +101,16 @@ int wxDialog::ShowModal()
 void wxDialog::EndModal(int retCode)
 {
     wxCHECK_RET( GetDialogHandle() != nullptr, "Invalid dialog" );
-    wxASSERT_MSG( IsModal(), "EndModal() called for non modal dialog" );
 
-    SetReturnCode(retCode);
+    SetReturnCode( retCode );
+
+    if ( !IsShown() )
+    {
+        // Don't assert when EndModal is called from InitDialog handler.
+        return;
+    }
+
+    wxASSERT_MSG( IsModal(), wxT("EndModal() called for non modal dialog") );
 
     QDialog* qDialog = GetDialogHandle();
     qDialog->done( QDialog::Accepted );
@@ -123,21 +130,29 @@ bool wxDialog::IsModal() const
 
 bool wxDialog::Show(bool show)
 {
-    if ( show == IsShown() )
+    if (show == IsShown())
         return false;
 
-    if ( !show && IsModal() )
-        EndModal(wxID_CANCEL);
+    if (!show && IsModal())
+    {
+        EndModal( wxID_CANCEL );
+    }
 
-    if ( show && CanDoLayoutAdaptation() )
-        DoLayoutAdaptation();
+    if ( show )
+    {
+        if (CanDoLayoutAdaptation())
+            DoLayoutAdaptation();
 
-    const bool ret = wxDialogBase::Show(show);
-
-    if (show)
+        // this usually will result in TransferDataToWindow() being called
+        // which will change the controls values so do it before showing as
+        // otherwise we could have some flicker
         InitDialog();
 
-    return ret;
+        // Don't show the dialog if EndModal() has been called during initialization.
+        show = GetReturnCode() == 0;
+    }
+
+    return wxDialogBase::Show(show);
 }
 
 QDialog *wxDialog::GetDialogHandle() const
