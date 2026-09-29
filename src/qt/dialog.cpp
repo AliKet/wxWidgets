@@ -78,14 +78,21 @@ int wxDialog::ShowModal()
     // capture making it impossible to do anything in the modal dialog itself
     QtReleaseMouseAndNotify();
 
-    QDialog *qDialog = GetDialogHandle();
-    qDialog->setModal(true);
-
     Show(true);
 
-    bool ret = qDialog->exec();
-    if ( GetReturnCode() == 0 )
-        return ret ? wxID_OK : wxID_CANCEL;
+    // EndModal may have been called from InitDialog handler (called from
+    // inside Show()) and hidden the dialog back again
+
+    if ( IsShown() )
+    {
+        QDialog* qDialog = GetDialogHandle();
+        qDialog->setModal(true);
+
+        bool ret = qDialog->exec();
+        if ( GetReturnCode() == 0 )
+            return ret ? wxID_OK : wxID_CANCEL;
+    }
+
     return GetReturnCode();
 }
 
@@ -94,7 +101,13 @@ void wxDialog::EndModal(int retCode)
     wxCHECK_RET( GetDialogHandle() != nullptr, "Invalid dialog" );
 
     SetReturnCode(retCode);
-    GetDialogHandle()->done( QDialog::Accepted );
+
+    if ( IsShown() )
+    {
+        wxASSERT_MSG( IsModal(), wxT("EndModal() called for non modal dialog") );
+
+        Hide();
+    }
 }
 
 bool wxDialog::IsModal() const
@@ -109,18 +122,26 @@ bool wxDialog::Show(bool show)
     if ( show == IsShown() )
         return false;
 
-    if ( !show && IsModal() )
-        EndModal(wxID_CANCEL);
+    if ( show )
+    {
+        if ( CanDoLayoutAdaptation() )
+            DoLayoutAdaptation();
 
-    if ( show && CanDoLayoutAdaptation() )
-        DoLayoutAdaptation();
-
-    const bool ret = wxDialogBase::Show(show);
-
-    if (show)
+        // this usually will result in TransferDataToWindow() being called
+        // which will change the controls values so do it before showing as
+        // otherwise we could have some flicker
         InitDialog();
 
-    return ret;
+        // Don't show the dialog if EndModal() has been called from InitDialog()
+        show = GetReturnCode() == 0;
+    }
+    else
+    {
+        if ( IsModal() )
+            GetDialogHandle()->done( QDialog::Accepted );
+    }
+
+    return wxDialogBase::Show(show);
 }
 
 QDialog *wxDialog::GetDialogHandle() const
