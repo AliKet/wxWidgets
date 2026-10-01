@@ -64,8 +64,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 
     wxUIActionSimulator sim;
 
-    wxPoint panelPos = panel->GetScreenPosition();
-    wxPoint pos = panelPos + panel->GetSize() + wxPoint(800, 5);
+    wxPoint pos = panel->GetScreenPosition() + panel->GetSize();
 
     // Make sure the mouse is outside the window before starting the tests.
     sim.MouseMove(pos);
@@ -73,15 +72,18 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
     enter.Clear();
     leave.Clear();
 
-    REQUIRE_FALSE(panel.get() == wxFindWindowAtPointer(pos));
+    REQUIRE_FALSE(panel.get() == wxFindWindowAtPoint(pos));
 
     SECTION("Without mouse capture")
     {
-        pos = panelPos + wxPoint(5, 5);
+        pos = panel->GetScreenPosition() + wxPoint(5, 5);
         sim.MouseMove(pos);
+#if defined(__WXQT__) && defined(__WINDOWS__)
+        YieldForAWhile(1000);
+#else
         YieldForAWhile();
-
-        REQUIRE(panel.get() == wxFindWindowAtPointer(pos));
+#endif
+        REQUIRE(panel.get() == wxFindWindowAtPoint(pos));
 
         CHECK( enter.GetCount() == 1 );
         CHECK( leave.GetCount() == 0 );
