@@ -47,7 +47,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW under Wine.");
         return;
     }
-#else // __WXMSW__
+#endif // __WXMSW__
 
     auto panel = make_unique<wxPanel>(wxTheApp->GetTopWindow(), wxID_ANY);
     auto button = new wxButton(panel.get(), wxID_ANY, "button", {50, 50});
