@@ -41,6 +41,14 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         return;
     }
 
+#ifdef __WXMSW__
+    if ( wxIsRunningUnderWine() )
+    {
+        WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW known to fail under Wine");
+        return;
+    }
+#endif // __WXMSW__
+
     auto panel = make_unique<wxPanel>(wxTheApp->GetTopWindow(), wxID_ANY);
     auto button = new wxButton(panel.get(), wxID_ANY, "button", {50, 50});
     auto textctrl = new wxTextCtrl(panel.get(), wxID_ANY, "", {160, 50});
@@ -56,10 +64,24 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 
     wxUIActionSimulator sim;
 
+    wxPoint panelPos = panel->GetScreenPosition();
+    wxPoint pos = panelPos + panel->GetSize() + wxPoint(800, 5);
+
+    // Make sure the mouse is outside the window before starting the tests.
+    sim.MouseMove(pos);
+    YieldForAWhile();
+    enter.Clear();
+    leave.Clear();
+
+    REQUIRE_FALSE(panel.get() == wxFindWindowAtPointer(pos));
+
     SECTION("Without mouse capture")
     {
-        sim.MouseMove(panel->GetScreenPosition() + wxPoint(5, 5));
+        pos = panelPos + wxPoint(5, 5);
+        sim.MouseMove(pos);
         YieldForAWhile();
+
+        REQUIRE(panel.get() == wxFindWindowAtPointer(pos));
 
         CHECK( enter.GetCount() == 1 );
         CHECK( leave.GetCount() == 0 );
