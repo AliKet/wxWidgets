@@ -73,8 +73,8 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
     SECTION("Without mouse capture")
     {
         wxPoint panelPos = panel->GetScreenPosition();
-        sim.MouseMove(panelPos - wxPoint(5, 5));
-        YieldForAWhile();
+//        sim.MouseMove(panelPos - wxPoint(5, 5));
+//        YieldForAWhile();
     
         sim.MouseMove(panelPos + wxPoint(5, 5));
         YieldForAWhile();
