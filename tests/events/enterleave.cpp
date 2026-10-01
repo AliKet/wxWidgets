@@ -56,6 +56,12 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 
     wxUIActionSimulator sim;
 
+    // Make sure the mouse is outside the window before starting the tests.
+    sim.MouseMove(panel->GetScreenPosition() + panel->GetSize() + wxPoint(5, 5));
+    YieldForAWhile();
+    enter.Clear();
+    leave.Clear();
+
     SECTION("Without mouse capture")
     {
         sim.MouseMove(panel->GetScreenPosition() + wxPoint(5, 5));
