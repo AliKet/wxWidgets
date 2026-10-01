@@ -41,6 +41,14 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         return;
     }
 
+#ifdef __WXMSW__
+    if ( wxIsRunningUnderWine() )
+    {
+        WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW under Wine.");
+        return;
+    }
+#else // __WXMSW__
+
     auto panel = make_unique<wxPanel>(wxTheApp->GetTopWindow(), wxID_ANY);
     auto button = new wxButton(panel.get(), wxID_ANY, "button", {50, 50});
     auto textctrl = new wxTextCtrl(panel.get(), wxID_ANY, "", {160, 50});
