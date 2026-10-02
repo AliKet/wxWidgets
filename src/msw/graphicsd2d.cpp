@@ -3758,14 +3758,18 @@ protected:
             &renderTarget);
         wxCHECK_HRESULT_RET(hr);
 
-        // We want draw on the entire device area.
-        // GetClipBox() retrieves logical size of DC
-        // what is what we need to pass to BindDC.
         RECT r;
         int status = ::GetClipBox(m_hdc, &r);
         wxCHECK_RET( status != ERROR, wxS("Error retrieving DC dimensions") );
 
-        hr = renderTarget->BindDC(m_hdc, &r);
+        // Draw on the entire device area.
+        RECT rect;
+        rect.left   = 0;
+        rect.top    = 0;
+        rect.right  = ::GetDeviceCaps(m_hdc, HORZRES);
+        rect.bottom = ::GetDeviceCaps(m_hdc, VERTRES);
+
+        hr = renderTarget->BindDC(m_hdc, &rect);
         if (FAILED(hr))
         {
             // BindDC can fail with E_INVALIDARG if the given RECT is too
