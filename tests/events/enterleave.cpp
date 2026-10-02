@@ -78,9 +78,10 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
     {
         pos = panel->GetScreenPosition() + wxPoint(5, 5);
         sim.MouseMove(pos);
+        YieldForAWhile();
 #if defined(__WXQT__) && defined(__WINDOWS__)
-        YieldForAWhile(1000);
-#else
+        pos = panel->GetScreenPosition() + wxPoint(10, 5);
+        sim.MouseMove(pos);
         YieldForAWhile();
 #endif
         REQUIRE(panel.get() == wxFindWindowAtPoint(pos));
