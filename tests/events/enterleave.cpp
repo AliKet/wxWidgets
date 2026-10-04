@@ -47,14 +47,6 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW known to fail under Wine");
         return;
     }
-
-#ifdef __WXQT__
-    if ( IsAutomaticTest() )
-    {
-        WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW known to fail on Windows under GitHub Actions");
-        return;
-    }
-#endif // __WXQT__
 #endif // __WINDOWS__
 
     auto panel = make_unique<wxPanel>(wxTheApp->GetTopWindow(), wxID_ANY);
@@ -86,7 +78,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
     {
         pos = panel->GetScreenPosition() + wxPoint(5, 5);
         sim.MouseMove(pos);
-        YieldForAWhile();
+        YieldForAWhile(250);
 
         REQUIRE(panel.get() == wxFindWindowAtPoint(pos));
 
