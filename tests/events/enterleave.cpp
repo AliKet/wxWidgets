@@ -58,7 +58,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 
     wxUIActionSimulator sim;
 
-    wxPoint pos = panel->GetScreenPosition() + panel->GetSize();
+    wxPoint pos = panel->GetScreenPosition() + panel->GetSize() + wxPoint(10, 10);
 
     sim.MouseMove(pos);
     YieldForAWhile();
