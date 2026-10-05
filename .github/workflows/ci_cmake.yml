@@ -198,7 +198,7 @@ jobs:
           echo wxCMAKE_BUILD_TOOLKIT=$cmake_build_toolkit >> $GITHUB_ENV
           echo QT_QPA_PLATFORM_PLUGIN_PATH=${QT_ROOT_DIR}/plugins/platforms >> $GITHUB_ENV
           echo QT_USE_NATIVE_WINDOWS=1 >> $GITHUB_ENV
-          echo QTEST_QPA_MOUSE_HANDLING=1 >> $GITHUB_ENV
+          echo QTEST_QPA_MOUSE_HANDLING=0 >> $GITHUB_ENV
 
           # Setting this variable suppresses "Error retrieving accessibility bus address"
           # messages from WebKit tests that we're not interested in.
