@@ -60,7 +60,7 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
     // has its final size.
     WaitForPaint waitForPaint(panel.get());
     panel->SendSizeEventToParent();
-    waitForPaint.YieldUntilPainted();
+    waitForPaint.YieldUntilPainted(500);
 
     wxUIActionSimulator sim;
 
@@ -76,9 +76,9 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
 
     SECTION("Without mouse capture")
     {
-        pos = panel->GetScreenPosition() + wxPoint(5, 5);
+        pos -= wxPoint(5, 5);
         sim.MouseMove(pos);
-        YieldForAWhile(250);
+        YieldForAWhile();
 
         REQUIRE(panel.get() == wxFindWindowAtPoint(pos));
 
