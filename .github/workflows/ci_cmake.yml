@@ -196,6 +196,7 @@ jobs:
 
           cmake_build_toolkit=${{ matrix.cmake_build_toolkit }}
           echo wxCMAKE_BUILD_TOOLKIT=$cmake_build_toolkit >> $GITHUB_ENV
+          if [ -z ${{ runner.os == 'windows' }} ]; then echo QT_QPA_PLATFORM=qwindows >> $GITHUB_ENV; fi
           echo QT_QPA_PLATFORM_PLUGIN_PATH=${QT_ROOT_DIR}/plugins/platforms >> $GITHUB_ENV
           echo QT_USE_NATIVE_WINDOWS=1 >> $GITHUB_ENV
           echo QTEST_QPA_MOUSE_HANDLING=1 >> $GITHUB_ENV
@@ -257,6 +258,8 @@ jobs:
           fi
 
       - name: Testing GUI
+        env:
+          QT_SCREENSHOT_DIR: ${{ github.workspace }}/screenshots
         if: matrix.test_gui == '1'
         working-directory: build_cmake\lib\vc_x64_dll
         run: |
@@ -269,3 +272,13 @@ jobs:
           pushd build_cmake_install_test
           cmake -G "${{ matrix.cmake_generator }}" ${{ matrix.cmake_defines }} ../samples/minimal
           cmake --build .
+
+      # Upload screenshots regardless of test pass/fail status
+      - name: Upload Test Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qt-test-screenshots
+          path: |
+            screenshots/*.png
+          if-no-files-found: ignore

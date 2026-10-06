@@ -27,6 +27,12 @@
 #include "testableframe.h"
 #include "waitfor.h"
 
+#if defined(__WXQT__) && defined(__WINDOWS__)
+#include <QtCore/QDir>
+#include <QtGui/QPixmap>
+#include <QtWidgets/QWidget>
+#endif
+
 // ----------------------------------------------------------------------------
 // tests themselves
 // ----------------------------------------------------------------------------
@@ -47,14 +53,6 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW known to fail under Wine");
         return;
     }
-
-#ifdef __WXQT__
-    if ( IsAutomaticTest() )
-    {
-        WARN("Skipping testing wxEVT_{ENTER,LEAVE}_WINDOW known to fail on Windows under GitHub Actions");
-        return;
-    }
-#endif // __WXQT__
 #endif // __WINDOWS__
 
     auto panel = make_unique<wxPanel>(wxTheApp->GetTopWindow(), wxID_ANY);
@@ -89,6 +87,22 @@ TEST_CASE("EnterLeaveEvents", "[wxEvent][enter-leave]")
         YieldForAWhile();
 
         REQUIRE(panel.get() == wxFindWindowAtPoint(pos));
+
+#if defined(__WXQT__) && defined(__WINDOWS__)
+        QPixmap screenshot = wxTheApp->GetTopWindow()->GetHandle()->grab();
+
+        const QString dir = qEnvironmentVariable("QT_SCREENSHOT_DIR",
+                                QDir::current().filePath("screenshots"));
+
+        QDir().mkpath(dir);
+
+        const QString path = QDir(dir).filePath("test_widget.png");
+        bool saved = screenshot.save(path, "PNG");
+
+        YieldForAWhile(2000);
+
+        CHECK(saved);
+#endif
 
         CHECK( enter.GetCount() == 1 );
         CHECK( leave.GetCount() == 0 );
