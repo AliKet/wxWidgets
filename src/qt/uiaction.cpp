@@ -22,12 +22,14 @@
 #endif
 
 #include <QtTest/QtTestGui>
+#include <QtGui/QCursor>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 
 #include "wx/qt/defs.h"
 #include "wx/qt/private/utils.h"
 #include "wx/qt/private/converter.h"
+#include "wx/qt/private/winevent.h"
 
 
 using namespace Qt;
@@ -56,7 +58,14 @@ public:
 
 private:
     // This class has no public ctors, use Get() instead.
-    wxUIActionSimulatorQtImpl() { m_mousePosition = QCursor::pos(); }
+    wxUIActionSimulatorQtImpl()
+    {
+        m_mousePosition = QPoint(5000, 5000);
+        QCursor::setPos(m_mousePosition);
+        QTest::qWait(10);
+
+//        m_mousePosition = QCursor::pos();
+    }
 
     // Simulating mouse clicks with one or more modifiers only works if the modifier(s)
     // is/are passed along with the mouse click. We just put SaveModifierForMouseClicks()
