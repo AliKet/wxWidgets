@@ -22,7 +22,6 @@
 #endif
 
 #include <QtTest/QtTestGui>
-#include <QtGui/QCursor>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 
@@ -62,7 +61,7 @@ private:
     {
         m_mousePosition = QPoint(5000, 5000);
         QCursor::setPos(m_mousePosition);
-        QTest::qWait(10);
+//       QTest::qWait(10);
 
 //        m_mousePosition = QCursor::pos();
     }
