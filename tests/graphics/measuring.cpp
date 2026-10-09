@@ -63,7 +63,7 @@ void GetTextExtentTester(const T& obj)
 
 // Currently this is known to work in wxMSW and wxGTK3, to be checked (and
 // enabled) for the other ports.
-#if defined(__WXMSW__) || defined(__WXGTK3__)
+#if defined(__WXMSW__) || defined(__WXGTK3__) || defined(__WXQT__)
     #define wxHAS_ROTATED_TEXT_RIGHT_ANGLE_TEST
 #endif
 
