@@ -164,7 +164,7 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ matrix.cmake_qt_version }}
-          cache: 'true'
+          cache: 'false'
           aqtversion: '==3.3.*'
           setup-python: 'false'
 
