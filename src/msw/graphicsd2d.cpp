@@ -3776,10 +3776,10 @@ protected:
             // large, just fail to create the render target in this case.
             return;
         }
-/*
+
         renderTarget->SetTransform(
                        D2D1::Matrix3x2F::Translation(-r.left, -r.top));
-*/
+
         m_nativeResource = renderTarget;
     }
 
