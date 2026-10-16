@@ -3760,8 +3760,6 @@ protected:
         int status = ::GetClipBox(m_hdc, &r);
         wxCHECK_RET( status != ERROR, wxS("Error retrieving DC dimensions") );
 
-        gs_rect = r;
-
         RECT rect;
         rect.left   = 0;
         rect.top    = 0;
