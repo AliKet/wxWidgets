@@ -103,6 +103,7 @@ wxMSVC_WARNING_RESTORE(4458)
         "Cannot acquire a native resource without being bound to a manager"); \
     }
 
+static RECT gs_rect;
 
 // Helper class used to check for direct2d availability at runtime and to
 // dynamically load the required symbols from d2d1.dll and dwrite.dll
@@ -3760,7 +3761,15 @@ protected:
         int status = ::GetClipBox(m_hdc, &r);
         wxCHECK_RET( status != ERROR, wxS("Error retrieving DC dimensions") );
 
-        hr = renderTarget->BindDC(m_hdc, &r);
+        gs_rect = r;
+
+        RECT rect;
+        rect.left   = 0;
+        rect.top    = 0;
+        rect.right  = ::GetDeviceCaps(m_hdc, HORZRES);
+        rect.bottom = ::GetDeviceCaps(m_hdc, VERTRES);
+
+        hr = renderTarget->BindDC(m_hdc, &rect);
         if (FAILED(hr))
         {
             // BindDC can fail with E_INVALIDARG if the given RECT is too
@@ -4231,6 +4240,7 @@ wxD2DContext::~wxD2DContext()
 
     if (target)
     {
+        target->PopAxisAlignedClip();
         HRESULT result = target->EndDraw();
         wxCHECK_HRESULT_RET(result);
     }
@@ -4886,6 +4896,13 @@ bool wxD2DContext::EnsureInitialized()
     m_target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
     m_target->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_DEFAULT);
     m_target->BeginDraw();
+    m_target->PushAxisAlignedClip(
+        D2D1::RectF(FLOAT(gs_rect.left), FLOAT(gs_rect.top),
+                    FLOAT(gs_rect.right), FLOAT(gs_rect.bottom)),
+        D2D1_ANTIALIAS_MODE_PER_PRIMITIVE
+    );
+
+    gs_rect = {};
 
     return true;
 }
