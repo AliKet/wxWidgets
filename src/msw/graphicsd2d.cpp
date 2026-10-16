@@ -3760,7 +3760,15 @@ protected:
         int status = ::GetClipBox(m_hdc, &r);
         wxCHECK_RET( status != ERROR, wxS("Error retrieving DC dimensions") );
 
-        hr = renderTarget->BindDC(m_hdc, &r);
+        gs_rect = r;
+
+        RECT rect;
+        rect.left   = 0;
+        rect.top    = 0;
+        rect.right  = ::GetDeviceCaps(m_hdc, HORZRES);
+        rect.bottom = ::GetDeviceCaps(m_hdc, VERTRES);
+
+        hr = renderTarget->BindDC(m_hdc, &rect);
         if (FAILED(hr))
         {
             // BindDC can fail with E_INVALIDARG if the given RECT is too
