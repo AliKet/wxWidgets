@@ -4060,6 +4060,9 @@ private:
     D2D1::Matrix3x2F m_inheritedTransform;
     D2D1::Matrix3x2F m_initTransform;
     D2D1::Matrix3x2F m_initTransformInv;
+
+    wxPoint m_gdiOrg;
+
     // Clipping box
     bool m_isClipBoxValid;
     double m_clipX1, m_clipY1, m_clipX2, m_clipY2;
@@ -4875,6 +4878,8 @@ bool wxD2DContext::EnsureInitialized()
         return false;
 
     m_target->GetTransform(&m_initTransform);
+    m_gdiOrg.x = wxRound(m_initTransform._31);
+    m_gdiOrg.y = wxRound(m_initTransform._32);
     m_initTransform = m_initTransform * m_inheritedTransform;
     wxASSERT(m_initTransform.IsInvertible());
     m_initTransformInv = m_initTransform;
@@ -5086,12 +5091,30 @@ WXHDC wxD2DContext::GetNativeHDC()
     HDC hdc;
     HRESULT hr = m_gdiRenderTarget->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hdc);
     wxCHECK_MSG(SUCCEEDED(hr), nullptr, wxString::Format("Can't get HDC from Direct2D context (hr=%x)", hr));
+
+    if ( m_gdiOrg.x != 0 || m_gdiOrg.y != 0 )
+    {
+        ::OffsetViewportOrgEx(hdc, m_gdiOrg.x, m_gdiOrg.y, nullptr);
+    }
+
     return hdc;
 };
 
-void wxD2DContext::ReleaseNativeHDC(WXHDC WXUNUSED(hdc))
+void wxD2DContext::ReleaseNativeHDC(WXHDC hdc)
 {
     wxCHECK_RET(m_gdiRenderTarget, "Can't release HDC for Direct2D context");
+
+#if 0
+    if ( m_gdiOrg.x != 0 || m_gdiOrg.y != 0 )
+    {
+        ::OffsetViewportOrgEx(hdc, -m_gdiOrg.x, -m_gdiOrg.y, nullptr);
+
+        m_gdiOrg = wxPoint();
+    }
+#else
+    wxUnusedVar(hdc);
+#endif
+
     HRESULT hr = m_gdiRenderTarget->ReleaseDC(nullptr);
     wxCHECK_HRESULT_RET(hr);
 };
