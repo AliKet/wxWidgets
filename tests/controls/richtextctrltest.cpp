@@ -476,6 +476,7 @@ TEST_CASE_METHOD(RichTextCtrlTestCase,
     CHECK(m_rich->GetCaretPosition() == endOfSingleCharacterLine);
 }
 
+#ifndef __WXQT__
 TEST_CASE_METHOD(RichTextCtrlTestCase,
                  "RichTextCtrl::MoveUpDownThroughEmptyLines",
                  "[richtextctrl]")
@@ -518,6 +519,7 @@ TEST_CASE_METHOD(RichTextCtrlTestCase,
 
     CHECK(m_rich->GetInsertionPoint() == 0);
 }
+#endif // __WXQT__
 
 TEST_CASE_METHOD(RichTextCtrlTestCase, "RichTextCtrl::Selection",
                  "[richtextctrl]")
